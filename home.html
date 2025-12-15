@@ -4,102 +4,35 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Palm Oil Dashboard</title>
-<link rel="stylesheet" href="home-style.css">
+<link rel="stylesheet" href="home.css">
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css">
 </head>
 <body>
+  <header>
+    <h2>Hello, <span id="adminName"></span></h2>
+    <button id="logoutBtn">Logout</button>
+  </header>
 
-<!-- Header -->
-<header>
-  <h2>Hello, <span id="adminName"></span></h2>
-  <button id="logoutBtn">Logout</button>
-</header>
+  <div class="controls">
+    <label>Select Date:</label>
+    <input type="date" id="datePicker">
+    
+    <label style="margin-left:20px;">View Mode:</label>
+    <select id="viewMode">
+      <option value="rain">Rain Probability</option>
+      <option value="water">Water ON/OFF</option>
+    </select>
 
-<!-- Total Cost -->
-<div class="controls">
-  <span>Total Cost: RM <span id="totalCost">0.00</span></span>
-</div>
+    <button id="generatePDF" style="margin-left:20px;">Generate PDF Receipt</button>
+    <span>Total Cost: RM <span id="totalCost">0.00</span></span>
+  </div>
 
-<!-- Map Container -->
-<div id="map"></div>
+  <div id="map" style="height: 600px;"></div>
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
-<script>
-document.addEventListener("DOMContentLoaded", function() {
-
-  // ---- Check current user ----
-  const user = JSON.parse(localStorage.getItem("currentUser"));
-  if(!user) { window.location.href = "login.html"; return; }
-  document.getElementById("adminName").textContent = user.firstname;
-
-  // ---- Map setup ----
-  const map = L.map("map").setView([3.817, 102.025], 15); // FELDA Jengka, Pahang
-  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    attribution: "© OpenStreetMap contributors"
-  }).addTo(map);
-
-  const drawnItems = new L.FeatureGroup();
-  map.addLayer(drawnItems);
-
-  const drawControl = new L.Control.Draw({
-    draw: { polygon:true, polyline:false, rectangle:false, circle:false, marker:false },
-    edit: { featureGroup: drawnItems }
-  });
-  map.addControl(drawControl);
-
-  const COST_PER_AREA = 0.05;
-  let totalCost = 0;
-  function updateTotal() {
-    totalCost = 0;
-    drawnItems.eachLayer(layer => {
-      if(layer.waterOn && layer.cost) totalCost += parseFloat(layer.cost);
-    });
-    document.getElementById("totalCost").textContent = totalCost.toFixed(2);
-  }
-
-  function calculateArea(layer) {
-    return L.GeometryUtil.geodesicArea(layer.getLatLngs()[0]);
-  }
-
-  function updatePolygon(layer) {
-    layer.waterOn = layer.waterOn || false;
-    const area = calculateArea(layer);
-    const cost = (area * COST_PER_AREA).toFixed(2);
-    layer.area = area;
-    layer.cost = cost;
-
-    layer.setStyle({ color:"green", fillColor:"green", fillOpacity:0.4 });
-
-    layer.bindPopup(`
-      Area: ${area.toFixed(2)} m²<br>
-      Cost: RM ${cost}<br>
-      Watering ${layer.waterOn?"ON":"OFF"}<br>
-      Click polygon to toggle water
-    `);
-    updateTotal();
-  }
-
-  function toggleWater(layer) {
-    layer.waterOn = !layer.waterOn;
-    updatePolygon(layer);
-  }
-
-  map.on(L.Draw.Event.CREATED, function(e){
-    const layer = e.layer;
-    layer.waterOn = false;
-    drawnItems.addLayer(layer);
-    updatePolygon(layer);
-    layer.on("click", ()=>toggleWater(layer));
-  });
-
-  document.getElementById("logoutBtn").onclick = ()=>{
-    localStorage.removeItem("currentUser");
-    window.location.href = "login.html";
-  };
-
-});
-</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="home.js"></script>
 </body>
 </html>
