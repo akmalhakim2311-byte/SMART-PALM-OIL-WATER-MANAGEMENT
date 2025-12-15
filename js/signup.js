@@ -1,37 +1,51 @@
-document.addEventListener("DOMContentLoaded", () => {
-    const signupBtn = document.getElementById("signupBtn");
-    const tnc = document.getElementById("tnc");
+// signup.js
 
-    const firstname = document.getElementById("firstname");
-    const lastname = document.getElementById("lastname");
-    const username = document.getElementById("su-username");
-    const password = document.getElementById("su-password");
-    const cpassword = document.getElementById("su-cpassword");
+// Elements
+const firstname = document.getElementById("firstname");
+const lastname = document.getElementById("lastname");
+const username = document.getElementById("su-username");
+const password = document.getElementById("su-password");
+const cpassword = document.getElementById("su-cpassword");
+const tnc = document.getElementById("tnc");
+const signupBtn = document.getElementById("signupBtn");
 
-    tnc.addEventListener("change", () => {
-        signupBtn.disabled = !tnc.checked;
+// Enable signup button only if terms checked
+tnc.addEventListener("change", () => {
+    signupBtn.disabled = !tnc.checked;
+});
+
+signupBtn.addEventListener("click", () => {
+    if (!firstname.value || !lastname.value || !username.value || !password.value || !cpassword.value) {
+        alert("Please fill in all fields!");
+        return;
+    }
+    if (password.value !== cpassword.value) {
+        alert("Passwords do not match!");
+        return;
+    }
+
+    // Get accounts from localStorage
+    let accounts = JSON.parse(localStorage.getItem("accounts")) || [];
+
+    // Check if username exists
+    if (accounts.some(acc => acc.username === username.value)) {
+        alert("Username already exists! Please choose another.");
+        return;
+    }
+
+    // Add new account
+    accounts.push({
+        firstname: firstname.value,
+        lastname: lastname.value,
+        username: username.value,
+        password: password.value
     });
 
-    signupBtn.addEventListener("click", () => {
-        const fn = firstname.value.trim();
-        const ln = lastname.value.trim();
-        const user = username.value.trim();
-        const pass = password.value.trim();
-        const cpass = cpassword.value.trim();
+    // Save back to localStorage
+    localStorage.setItem("accounts", JSON.stringify(accounts));
 
-        if (!fn || !ln || !user || !pass || !cpass) {
-            alert("Please fill in all fields!");
-            return;
-        }
-        if (pass !== cpass) { alert("Password does not match!"); return; }
+    alert("Account created successfully!");
 
-        let accounts = JSON.parse(localStorage.getItem("accounts")) || [];
-        if (accounts.find(acc => acc.username === user)) { alert("Username already exists!"); return; }
-
-        accounts.push({ firstname: fn, lastname: ln, username: user, password: pass });
-        localStorage.setItem("accounts", JSON.stringify(accounts));
-
-        alert("Account created successfully!");
-        window.location.href = "index.html";
-    });
+    // Redirect to login page
+    window.location.href = "index.html";
 });
