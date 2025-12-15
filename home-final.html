@@ -4,9 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Palm Oil Dashboard</title>
-<!-- Leaflet CSS -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
-<!-- Leaflet Draw CSS -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css">
 <style>
   body { margin:0; padding:0; font-family: Arial; }
@@ -36,90 +34,132 @@
 
 <div id="map"></div>
 
-<!-- Leaflet JS -->
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-<!-- Leaflet Draw JS -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
 <script>
-// Initialize map
-const map = L.map("map").setView([3.8127, 102.3140], 15); // FELDA Jengka
+document.addEventListener("DOMContentLoaded", async function() {
 
-// Add OpenStreetMap tiles
-L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-  attribution: "© OpenStreetMap contributors"
-}).addTo(map);
+  // ----- Map setup -----
+  const map = L.map("map").setView([3.8127, 102.3140], 15); // FELDA Jengka
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    attribution: "© OpenStreetMap contributors"
+  }).addTo(map);
 
-// Feature group for drawn polygons
-const drawnItems = new L.FeatureGroup();
-map.addLayer(drawnItems);
+  const drawnItems = new L.FeatureGroup();
+  map.addLayer(drawnItems);
 
-// Draw control
-const drawControl = new L.Control.Draw({
-  draw: { polygon:true, polyline:false, rectangle:false, circle:false, marker:false },
-  edit: { featureGroup: drawnItems }
-});
-map.addControl(drawControl);
-
-// Cost calculation
-const COST_PER_AREA = 0.05;
-let totalCost = 0;
-
-function updateTotal() {
-  totalCost = 0;
-  drawnItems.eachLayer(layer => {
-    if(layer.waterOn && layer.cost) totalCost += parseFloat(layer.cost);
+  const drawControl = new L.Control.Draw({
+    draw: { polygon:true, polyline:false, rectangle:false, circle:false, marker:false },
+    edit: { featureGroup: drawnItems }
   });
-  document.getElementById("totalCost").textContent = totalCost.toFixed(2);
-}
+  map.addControl(drawControl);
 
-// Calculate polygon area (m²)
-function calculateArea(layer) {
-  return L.GeometryUtil.geodesicArea(layer.getLatLngs()[0]);
-}
+  const COST_PER_AREA = 0.05;
+  let totalCost = 0;
+  function updateTotal() {
+    totalCost = 0;
+    drawnItems.eachLayer(layer => {
+      if(layer.waterOn && layer.cost) totalCost += parseFloat(layer.cost);
+    });
+    document.getElementById("totalCost").textContent = totalCost.toFixed(2);
+  }
 
-// Update polygon style and popup
-function updatePolygon(layer) {
-  layer.waterOn = layer.waterOn || false;
-  const area = calculateArea(layer);
-  const cost = (area * COST_PER_AREA).toFixed(2);
-  layer.area = area;
-  layer.cost = cost;
-  layer.setStyle({ color:"green", fillColor:"green", fillOpacity:0.4 });
-  layer.bindPopup(`Area: ${area.toFixed(2)} m²<br>Cost: RM ${cost}<br>Water: ${layer.waterOn?"ON":"OFF"} (Click polygon)`);
-  updateTotal();
-}
+  function calculateArea(layer) {
+    return L.GeometryUtil.geodesicArea(layer.getLatLngs()[0]);
+  }
 
-// Toggle water on click
-function toggleWater(layer) {
-  layer.waterOn = !layer.waterOn;
-  updatePolygon(layer);
-}
+  // ----- OpenWeatherMap API -----
+  const API_KEY = "adb0eb54d909230353f3589a97c08521";
+  const LAT = 3.8127;
+  const LON = 102.3140;
 
-// Draw event
-map.on(L.Draw.Event.CREATED, function(e){
-  const layer = e.layer;
-  layer.waterOn = false;
-  drawnItems.addLayer(layer);
-  updatePolygon(layer);
-  layer.on("click", ()=>toggleWater(layer));
-});
+  // Fetch 7-day forecast
+  let weatherData = [];
+  async function fetchWeather() {
+    const url = `https://api.openweathermap.org/data/2.5/onecall?lat=${LAT}&lon=${LON}&exclude=current,minutely,hourly,alerts&units=metric&appid=${API_KEY}`;
+    const res = await fetch(url);
+    const data = await res.json();
+    weatherData = data.daily; // array of 7 days
+    console.log("Weather Data:", weatherData);
+  }
 
-// Logout
-document.getElementById("logoutBtn").onclick = () => {
-  alert("Logged out!");
-};
+  await fetchWeather();
 
-// Date picker
-const datePicker = document.getElementById("datePicker");
-datePicker.valueAsDate = new Date();
-datePicker.addEventListener("change", () => {
-  drawnItems.eachLayer(layer => updatePolygon(layer));
-});
+  function getRainProbability(date) {
+    // Find the forecast for the selected date
+    const selectedDate = new Date(date).setHours(0,0,0,0);
+    for(let day of weatherData) {
+      const dayDate = new Date(day.dt * 1000).setHours(0,0,0,0);
+      if(dayDate === selectedDate) {
+        return (day.pop || 0); // probability of precipitation 0-1
+      }
+    }
+    return 0; // default no rain
+  }
 
-// View mode
-const viewModeSelect = document.getElementById("viewMode");
-viewModeSelect.addEventListener("change", () => {
-  drawnItems.eachLayer(layer => updatePolygon(layer));
+  function updatePolygon(layer) {
+    layer.waterOn = layer.waterOn || false;
+    const area = calculateArea(layer);
+    const cost = (area * COST_PER_AREA).toFixed(2);
+    layer.area = area;
+    layer.cost = cost;
+
+    // Check if raining
+    const date = document.getElementById("datePicker").value;
+    const rainProb = getRainProbability(date);
+    layer.raining = rainProb > 0.5; // consider raining if probability >50%
+
+    // Polygon color
+    if(layer.raining) {
+      layer.setStyle({ color:"blue", fillColor:"blue", fillOpacity:0.4 });
+      layer.waterOn = false; // cannot water
+    } else {
+      layer.setStyle({ color:"green", fillColor:"green", fillOpacity:0.4 });
+    }
+
+    layer.bindPopup(`
+      Area: ${area.toFixed(2)} m²<br>
+      Cost: RM ${cost}<br>
+      Watering ${layer.waterOn ? "ON":"OFF"}<br>
+      Rain Prob: ${(rainProb*100).toFixed(0)}%
+      (Click polygon to toggle water if not raining)
+    `);
+
+    updateTotal();
+  }
+
+  function toggleWater(layer) {
+    if(layer.raining) return alert("Cannot water: It is raining!");
+    layer.waterOn = !layer.waterOn;
+    updatePolygon(layer);
+  }
+
+  map.on(L.Draw.Event.CREATED, function(e){
+    const layer = e.layer;
+    layer.waterOn = false;
+    drawnItems.addLayer(layer);
+    updatePolygon(layer);
+    layer.on("click", ()=>toggleWater(layer));
+  });
+
+  // Date picker change
+  const datePicker = document.getElementById("datePicker");
+  datePicker.valueAsDate = new Date();
+  datePicker.addEventListener("change", ()=>{
+    drawnItems.eachLayer(layer => updatePolygon(layer));
+  });
+
+  // View mode change (currently just refresh polygons)
+  const viewModeSelect = document.getElementById("viewMode");
+  viewModeSelect.addEventListener("change", ()=>{
+    drawnItems.eachLayer(layer => updatePolygon(layer));
+  });
+
+  // Logout
+  document.getElementById("logoutBtn").onclick = () => {
+    alert("Logged out!");
+  };
+
 });
 </script>
 
