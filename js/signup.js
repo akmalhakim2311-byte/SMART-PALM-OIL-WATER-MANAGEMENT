@@ -1,3 +1,4 @@
+console.log("signup.js loaded");
 const firstname = document.getElementById("firstname");
 const lastname = document.getElementById("lastname");
 const username = document.getElementById("username");
