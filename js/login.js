@@ -1,22 +1,21 @@
-// Remove spaces (LUtextBox_TextChanged / LPtextBox_TextChanged)
+// Remove spaces while typing
 function removeSpaces(input) {
     input.value = input.value.replace(/\s/g, '');
 }
 
-// Close button logic (BtnClose_Click)
+// Close button
 function closeApp() {
     if (confirm("Do you want to close this window?")) {
         window.close();
     }
 }
 
-// Login logic (BtnLogin_Click)
+// Login button
 function login() {
     let username = document.getElementById("username").value.trim();
     let password = document.getElementById("password").value.trim();
     let message = document.getElementById("message");
 
-    // Check empty username or password
     if (username === "" || password === "") {
         message.innerText = "Invalid username or password!";
         document.getElementById("username").value = "";
@@ -25,7 +24,7 @@ function login() {
         return;
     }
 
-    // Read Accounts.txt replacement
+    // Get accounts from localStorage
     let accounts = JSON.parse(localStorage.getItem("accounts")) || [];
 
     let loginSuccess = false;
@@ -44,7 +43,6 @@ function login() {
     }
 
     if (loginSuccess) {
-        // Save session (HomeForm replacement)
         sessionStorage.setItem("currentUser", JSON.stringify({
             username: username,
             firstname: firstname,
