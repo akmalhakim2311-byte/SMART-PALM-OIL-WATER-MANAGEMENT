@@ -3,46 +3,23 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Login</title>
-<link rel="stylesheet" href="login-style.css">
+<title>Login - Palm Oil Planner</title>
+<link rel="stylesheet" href="css/login.css">
 </head>
 <body>
 
-<!-- Background Video -->
-<video autoplay muted loop id="bg-video">
-  <source src="video/palm-oil-login.mp4" type="video/mp4">
+<video autoplay muted loop id="bgVideo">
+    <source src="video/palm-oil-login.mp4" type="video/mp4">
 </video>
 
-<!-- Login Form Container -->
 <div class="login-container">
-  <h2>Login</h2>
-  <input type="text" id="username" placeholder="Username">
-  <input type="password" id="password" placeholder="Password">
-  <button id="loginBtn">Login</button>
-  <p>Don't have an account? <a href="signup.html">Sign Up</a></p>
-  <p id="message" style="color:red;"></p>
+    <h2>Login</h2>
+    <input type="text" id="username" placeholder="Username">
+    <input type="password" id="password" placeholder="Password">
+    <button id="loginBtn">Login</button>
+    <p>Don't have an account? <a href="signup.html">Sign Up</a></p>
 </div>
 
-<script>
-document.getElementById("loginBtn").onclick = () => {
-  const username = document.getElementById("username").value.trim();
-  const password = document.getElementById("password").value.trim();
-  const accounts = JSON.parse(localStorage.getItem("accounts")) || [];
-
-  if(!username || !password) {
-    document.getElementById("message").textContent = "Please enter username and password.";
-    return;
-  }
-
-  const user = accounts.find(a => a.username===username && a.password===password);
-  if(user) {
-    localStorage.setItem("currentUser", JSON.stringify({ firstname: user.firstname, username: user.username }));
-    window.location.href = "home.html";
-  } else {
-    document.getElementById("message").textContent = "Invalid login or account not found.";
-  }
-};
-</script>
-
+<script src="js/login.js"></script>
 </body>
 </html>
