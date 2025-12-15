@@ -1,9 +1,4 @@
-body {
-  font-family: Arial, sans-serif;
-  margin: 0;
-  padding: 0;
-}
-
+body { font-family: Arial, sans-serif; margin:0; padding:0; }
 header {
   display: flex;
   justify-content: space-between;
@@ -12,7 +7,6 @@ header {
   color: white;
   padding: 10px 20px;
 }
-
 header button {
   padding: 5px 10px;
   background: #fff;
@@ -21,44 +15,9 @@ header button {
   border-radius: 4px;
   cursor: pointer;
 }
-
 .controls {
   padding: 10px 20px;
   display: flex;
   align-items: center;
 }
-
-#map {
-  width: 100%;
-  height: 600px; /* MUST have height */
-}
-
-.info.legend {
-  background: white;
-  padding: 10px;
-  border-radius: 6px;
-  box-shadow: 0 0 5px rgba(0,0,0,0.3);
-  font-size: 12px;
-}
-
-.gradient-bar {
-  width: 100%;
-  height: 20px;
-  background: linear-gradient(to right, rgb(0,200,0), rgb(0,0,200));
-  border-radius: 4px;
-  margin-top: 5px;
-}
-
-.gradient-bar-water {
-  width: 100%;
-  height: 20px;
-  background: linear-gradient(to right, lightgray, darkgreen, blue);
-  border-radius: 4px;
-  margin-top: 5px;
-}
-
-.legend-labels {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 2px;
-}
+#map { width: 100%; height: 600px; }
