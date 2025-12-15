@@ -45,15 +45,18 @@ body {
     color: #2E8B57;
 }
 
-/* Checkbox nicely positioned */
+/* Checkbox left-aligned next to tickbox */
 .checkbox-container {
     display: flex;
-    align-items: center;
-    margin: 15px 0;  /* spacing from inputs and button */
+    align-items: center; /* vertical align checkbox and text */
+    justify-content: flex-start; /* left-align everything */
+    margin: 15px 0; /* spacing from inputs and button */
+    gap: 8px; /* space between checkbox and text */
 }
 
-.checkbox-container input[type="checkbox"] {
-    margin-right: 10px; /* space between box and label */
+.checkbox-container label {
+    white-space: nowrap; /* keep text in one line */
+    cursor: pointer;
 }
 
 .signup-container a {
