@@ -2,35 +2,32 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Sign Up | Palm Oil System</title>
+    <title>Sign Up</title>
     <link rel="stylesheet" href="css/signup.css">
 </head>
 <body>
 
-<!-- Background Image -->
 <div class="bg-image"></div>
 <div class="overlay"></div>
 
-<!-- Signup Box -->
 <div class="container">
     <div class="signup-box">
         <h2>Create Account</h2>
 
-        <input type="text" id="firstname" placeholder="First Name" oninput="validateForm()">
-        <input type="text" id="lastname" placeholder="Last Name" oninput="validateForm()">
-        <input type="text" id="username" placeholder="Username" oninput="removeSpaces(this); validateForm()">
-        <input type="password" id="password" placeholder="Password" oninput="removeSpaces(this); validateForm()">
-        <input type="password" id="confirmPassword" placeholder="Confirm Password" oninput="removeSpaces(this); validateForm()">
+        <input id="firstname" type="text" placeholder="First Name">
+        <input id="lastname" type="text" placeholder="Last Name">
+        <input id="username" type="text" placeholder="Username">
+        <input id="password" type="password" placeholder="Password">
+        <input id="confirmPassword" type="password" placeholder="Confirm Password">
 
-        <!-- CENTERED CHECKBOX -->
         <div class="checkbox-container">
             <label>
-                <input type="checkbox" id="tnc" onchange="validateForm()">
+                <input id="tnc" type="checkbox">
                 I agree to the Terms & Conditions
             </label>
         </div>
 
-        <button id="signupBtn" onclick="signup()" disabled>Sign Up</button>
+        <button id="signupBtn" disabled>Sign Up</button>
 
         <p class="link">
             Already have an account?
