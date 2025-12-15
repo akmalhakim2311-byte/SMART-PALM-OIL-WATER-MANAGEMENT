@@ -25,27 +25,43 @@ body {
     width: 80%;
     padding: 10px;
     margin: 10px 0;
+    border-radius: 5px;
+    border: 1px solid #ccc;
 }
 
 .signup-container button {
     padding: 10px 20px;
     margin: 10px 0;
     cursor: pointer;
-}
-
-.signup-container label {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 10px 0;
-    cursor: pointer;
-}
-
-.signup-container input[type="checkbox"] {
-    margin-right: 10px;
+    border: none;
+    border-radius: 5px;
+    background-color: #2E8B57;
+    color: white;
+    font-size: 16px;
 }
 
 .signup-container h2 {
     margin-bottom: 20px;
     color: #2E8B57;
+}
+
+/* Checkbox container for perfect centering */
+.checkbox-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 10px 0;
+}
+
+.checkbox-container input[type="checkbox"] {
+    margin-right: 10px;
+}
+
+.signup-container a {
+    color: #2E8B57;
+    text-decoration: none;
+}
+
+.signup-container a:hover {
+    text-decoration: underline;
 }
