@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Palm Oil Water System | Login</title>
+
+    <!-- Link CSS -->
+    <link rel="stylesheet" href="css/login.css">
+</head>
+
+<body>
+
+<div class="login-container">
+    <h2>Admin Login</h2>
+
+    <input type="text" id="username" placeholder="Username" oninput="removeSpaces(this)">
+    <input type="password" id="password" placeholder="Password" oninput="removeSpaces(this)">
+
+    <button class="login-btn" onclick="login()">Login</button>
+    <button class="close-btn" onclick="closeApp()">Close</button>
+
+    <div class="message" id="message"></div>
+
+    <div class="signup">
+        <a href="signup.html">Sign up</a>
+    </div>
+</div>
+
+<!-- Link JavaScript -->
+<script src="js/login.js"></script>
+
+</body>
+</html>
