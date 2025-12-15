@@ -1,45 +1,37 @@
-const firstname = document.getElementById("firstname");
-const lastname = document.getElementById("lastname");
-const username = document.getElementById("username");
-const password = document.getElementById("password");
-const confirmPassword = document.getElementById("confirmPassword");
-const tnc = document.getElementById("tnc");
-const signupBtn = document.getElementById("signupBtn");
-const message = document.getElementById("message");
+document.addEventListener("DOMContentLoaded", () => {
+    const signupBtn = document.getElementById("signupBtn");
+    const tnc = document.getElementById("tnc");
 
-function validateForm() {
-    signupBtn.disabled = !(
-        firstname.value &&
-        lastname.value &&
-        username.value &&
-        password.value &&
-        confirmPassword.value &&
-        tnc.checked
-    );
-}
+    const firstname = document.getElementById("firstname");
+    const lastname = document.getElementById("lastname");
+    const username = document.getElementById("su-username");
+    const password = document.getElementById("su-password");
+    const cpassword = document.getElementById("su-cpassword");
 
-document.querySelectorAll("input").forEach(el => {
-    el.addEventListener("input", validateForm);
-    el.addEventListener("change", validateForm);
-});
-
-signupBtn.addEventListener("click", () => {
-    if (password.value !== confirmPassword.value) {
-        message.textContent = "Passwords do not match!";
-        return;
-    }
-
-    let accounts = JSON.parse(localStorage.getItem("accounts")) || [];
-
-    accounts.push({
-        username: username.value,
-        password: password.value,
-        firstname: firstname.value,
-        lastname: lastname.value
+    tnc.addEventListener("change", () => {
+        signupBtn.disabled = !tnc.checked;
     });
 
-    localStorage.setItem("accounts", JSON.stringify(accounts));
-    console.log("Account saved:", accounts);
+    signupBtn.addEventListener("click", () => {
+        const fn = firstname.value.trim();
+        const ln = lastname.value.trim();
+        const user = username.value.trim();
+        const pass = password.value.trim();
+        const cpass = cpassword.value.trim();
 
-    window.location.href = "index.html";
+        if (!fn || !ln || !user || !pass || !cpass) {
+            alert("Please fill in all fields!");
+            return;
+        }
+        if (pass !== cpass) { alert("Password does not match!"); return; }
+
+        let accounts = JSON.parse(localStorage.getItem("accounts")) || [];
+        if (accounts.find(acc => acc.username === user)) { alert("Username already exists!"); return; }
+
+        accounts.push({ firstname: fn, lastname: ln, username: user, password: pass });
+        localStorage.setItem("accounts", JSON.stringify(accounts));
+
+        alert("Account created successfully!");
+        window.location.href = "index.html";
+    });
 });
