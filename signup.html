@@ -1,1 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Sign Up | Palm Oil Water System</title>
+    <link rel="stylesheet" href="css/signup.css">
+</head>
+<body>
+
+<!-- Background Image -->
+<div class="bg-image"></div>
+<div class="overlay"></div>
+
+<div class="signup-container">
+    <h2>Create Account</h2>
+
+    <input type="text" id="firstname" placeholder="First Name">
+    <input type="text" id="lastname" placeholder="Last Name">
+    <input type="text" id="username" placeholder="Username" oninput="removeSpaces(this)">
+    <input type="password" id="password" placeholder="Password" oninput="removeSpaces(this)">
+    <input type="password" id="confirmPassword" placeholder="Confirm Password" oninput="removeSpaces(this)">
+
+    <label class="tnc">
+        <input type="checkbox" id="tnc" onchange="toggleSignup()"> I agree to Terms & Conditions
+    </label>
+
+    <button id="signupBtn" onclick="signup()" disabled>Sign Up</button>
+
+    <div class="message" id="message"></div>
+
+    <div class="login-link">
+        Already have an account? <a href="index.html">Login</a>
+    </div>
+</div>
+
+<script src="js/signup.js"></script>
+</body>
+</html>
 
