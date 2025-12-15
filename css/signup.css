@@ -1,4 +1,4 @@
-/* Full page background */
+/* Page background image */
 body {
     margin: 0;
     height: 100vh;
@@ -7,63 +7,81 @@ body {
     background-size: cover;
 }
 
-/* Centered signup form container */
+/* Signup form container */
 .signup-container {
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    max-width: 400px;
-    width: 90%;
+    width: 400px;
     padding: 30px;
-    background: rgba(255, 255, 255, 0.85);
-    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.88);
+    border-radius: 12px;
     text-align: center;
 }
 
-.signup-container input {
-    width: 80%;
-    padding: 10px;
-    margin: 10px 0;
-    border-radius: 5px;
-    border: 1px solid #ccc;
-}
-
-.signup-container button {
-    padding: 10px 20px;
-    margin: 10px 0;
-    cursor: pointer;
-    border: none;
-    border-radius: 5px;
-    background-color: #2E8B57;
-    color: white;
-    font-size: 16px;
-}
-
+/* Title */
 .signup-container h2 {
     margin-bottom: 20px;
     color: #2E8B57;
 }
 
-/* Checkbox left-aligned next to tickbox */
+/* Inputs */
+.signup-container input[type="text"],
+.signup-container input[type="password"] {
+    width: 80%;
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+}
+
+/* Checkbox aligned with inputs */
 .checkbox-container {
+    width: 80%;
+    margin: 10px auto;
     display: flex;
-    align-items: center; /* vertical align checkbox and text */
-    justify-content: flex-start; /* left-align everything */
-    margin: 15px 0; /* spacing from inputs and button */
-    gap: 8px; /* space between checkbox and text */
+    align-items: center;
+    justify-content: flex-start;
+    gap: 8px;
 }
 
 .checkbox-container label {
-    white-space: nowrap; /* keep text in one line */
+    white-space: nowrap;
+    font-size: 14px;
     cursor: pointer;
 }
 
-.signup-container a {
+/* Button */
+.signup-container button {
+    width: 80%;
+    padding: 10px;
+    margin-top: 15px;
+    border: none;
+    border-radius: 6px;
+    background-color: #2E8B57;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.signup-container button:disabled {
+    background-color: #aaa;
+    cursor: not-allowed;
+}
+
+/* Login link */
+.login-link {
+    margin-top: 15px;
+    font-size: 14px;
+}
+
+.login-link a {
     color: #2E8B57;
     text-decoration: none;
 }
 
-.signup-container a:hover {
+.login-link a:hover {
     text-decoration: underline;
 }
