@@ -1,8 +1,14 @@
 document.addEventListener("DOMContentLoaded", function() {
 
   // ===== Admin greeting =====
-  const user = JSON.parse(localStorage.getItem("currentUser"));
-  if (!user) window.location.href = "login.html";
+  let user = JSON.parse(localStorage.getItem("currentUser"));
+
+  // For testing: if no user, create a dummy user
+  if (!user) {
+    user = { firstname: "Admin" };
+    localStorage.setItem("currentUser", JSON.stringify(user));
+  }
+
   document.getElementById("adminName").textContent = user.firstname;
 
   // ===== Logout =====
