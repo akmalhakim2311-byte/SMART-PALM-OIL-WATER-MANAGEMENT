@@ -32,6 +32,7 @@ let totalCost = 0;
 
 // ===== WEATHER CHECK (OpenWeatherMap) =====
 const WEATHER_API_KEY = "adb0eb54d909230353f3589a97c08521";
+
 async function isRaining(lat, lng, date) {
   const url = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lng}&appid=${WEATHER_API_KEY}`;
   const res = await fetch(url);
@@ -66,6 +67,7 @@ map.on(L.Draw.Event.CREATED, async function (e) {
     layer.bindPopup(`☀️ No rain<br>Area: ${area.toFixed(2)} m²<br>Cost: RM ${cost}<br><b>Click polygon to toggle water</b>`);
   }
 
+  // Toggle water on click
   layer.on("click", () => {
     if (!raining) {
       layer.waterOn = !layer.waterOn;
@@ -85,7 +87,7 @@ function updateTotal() {
   document.getElementById("totalCost").textContent = totalCost.toFixed(2);
 }
 
-// ===== WHATSAPP PDF =====
+// ===== WHATSAPP PDF RECEIPT =====
 document.getElementById("sendReceipt").onclick = () => {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF();
@@ -102,6 +104,11 @@ document.getElementById("sendReceipt").onclick = () => {
       yOffset += 10;
     }
   });
+
+  const pdfData = doc.output("datauristring");
+  const whatsappUrl = "https://wa.me/60174909836?text=" + encodeURIComponent("Please see attached PDF receipt: " + pdfData);
+  window.open(whatsappUrl, "_blank");
+};
 
   const pdfData = doc.output("datauristring");
   const whatsappUrl = "https://wa.me/60174909836?text=" + encodeURIComponent("Please see attached PDF receipt: " + pdfData);
