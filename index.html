@@ -1,35 +1,23 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Login | Palm Oil System</title>
-    <link rel="stylesheet" href="css/login.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login - Palm Oil Planner</title>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<!-- Background video (optional – already working for you) -->
-<video autoplay muted loop class="bg-video">
+<video autoplay muted loop id="bgVideo">
     <source src="video/palm-oil-login.mp4" type="video/mp4">
 </video>
 
-<div class="overlay"></div>
-
-<div class="container">
-    <div class="login-box">
-        <h2>Admin Login</h2>
-
-        <input id="username" type="text" placeholder="Username">
-        <input id="password" type="password" placeholder="Password">
-
-        <button id="loginBtn">Login</button>
-
-        <p class="link">
-            Don’t have an account?
-            <a href="signup.html">Sign Up</a>
-        </p>
-
-        <p id="message"></p>
-    </div>
+<div class="login-container">
+    <h2>Login</h2>
+    <input type="text" id="username" placeholder="Username">
+    <input type="password" id="password" placeholder="Password">
+    <button id="loginBtn">Login</button>
+    <p>Don't have an account? <a href="signup.html">Sign Up</a></p>
 </div>
 
 <script src="js/login.js"></script>
