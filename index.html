@@ -30,4 +30,34 @@
 <script src="js/login.js"></script>
 
 </body>
+    <body>
+
+<!-- Background Video -->
+<video autoplay muted loop playsinline id="bg-video">
+    <source src="video/palm-oil.mp4" type="video/mp4">
+    Your browser does not support HTML5 video.
+</video>
+
+<!-- Dark overlay -->
+<div class="overlay"></div>
+
+<!-- Login Box -->
+<div class="login-container">
+    <h2>Admin Login</h2>
+
+    <input type="text" id="username" placeholder="Username" oninput="removeSpaces(this)">
+    <input type="password" id="password" placeholder="Password" oninput="removeSpaces(this)">
+
+    <button class="login-btn" onclick="login()">Login</button>
+    <button class="close-btn" onclick="closeApp()">Close</button>
+
+    <div class="message" id="message"></div>
+
+    <div class="signup">
+        <a href="signup.html">Sign up</a>
+    </div>
+</div>
+
+<script src="js/login.js"></script>
+</body>
 </html>
