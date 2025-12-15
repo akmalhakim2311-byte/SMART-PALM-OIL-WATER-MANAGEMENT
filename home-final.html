@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Palm Oil Dashboard</title>
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
+<!-- Leaflet Draw CSS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css">
+<style>
+  body { margin:0; padding:0; font-family: Arial; }
+  header { display:flex; justify-content:space-between; align-items:center; background:#2e8b57; color:white; padding:10px 20px; }
+  header button { padding:5px 10px; background:#fff; color:#2e8b57; border:none; border-radius:4px; cursor:pointer; }
+  .controls { padding:10px 20px; display:flex; align-items:center; }
+  #map { width:100%; height:600px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h2>Hello, Admin</h2>
+  <button id="logoutBtn">Logout</button>
+</header>
+
+<div class="controls">
+  <label>Select Date:</label>
+  <input type="date" id="datePicker" style="margin-left:10px;">
+  <label style="margin-left:20px;">View Mode:</label>
+  <select id="viewMode" style="margin-left:10px;">
+    <option value="rain">Rain Probability</option>
+    <option value="water">Water ON/OFF</option>
+  </select>
+  <span style="margin-left:20px;">Total Cost: RM <span id="totalCost">0.00</span></span>
+</div>
+
+<div id="map"></div>
+
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<!-- Leaflet Draw JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+<script>
+// Initialize map
+const map = L.map("map").setView([3.8127, 102.3140], 15); // FELDA Jengka
+
+// Add OpenStreetMap tiles
+L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+  attribution: "© OpenStreetMap contributors"
+}).addTo(map);
+
+// Feature group for drawn polygons
+const drawnItems = new L.FeatureGroup();
+map.addLayer(drawnItems);
+
+// Draw control
+const drawControl = new L.Control.Draw({
+  draw: { polygon:true, polyline:false, rectangle:false, circle:false, marker:false },
+  edit: { featureGroup: drawnItems }
+});
+map.addControl(drawControl);
+
+// Cost calculation
+const COST_PER_AREA = 0.05;
+let totalCost = 0;
+
+function updateTotal() {
+  totalCost = 0;
+  drawnItems.eachLayer(layer => {
+    if(layer.waterOn && layer.cost) totalCost += parseFloat(layer.cost);
+  });
+  document.getElementById("totalCost").textContent = totalCost.toFixed(2);
+}
+
+// Calculate polygon area (m²)
+function calculateArea(layer) {
+  return L.GeometryUtil.geodesicArea(layer.getLatLngs()[0]);
+}
+
+// Update polygon style and popup
+function updatePolygon(layer) {
+  layer.waterOn = layer.waterOn || false;
+  const area = calculateArea(layer);
+  const cost = (area * COST_PER_AREA).toFixed(2);
+  layer.area = area;
+  layer.cost = cost;
+  layer.setStyle({ color:"green", fillColor:"green", fillOpacity:0.4 });
+  layer.bindPopup(`Area: ${area.toFixed(2)} m²<br>Cost: RM ${cost}<br>Water: ${layer.waterOn?"ON":"OFF"} (Click polygon)`);
+  updateTotal();
+}
+
+// Toggle water on click
+function toggleWater(layer) {
+  layer.waterOn = !layer.waterOn;
+  updatePolygon(layer);
+}
+
+// Draw event
+map.on(L.Draw.Event.CREATED, function(e){
+  const layer = e.layer;
+  layer.waterOn = false;
+  drawnItems.addLayer(layer);
+  updatePolygon(layer);
+  layer.on("click", ()=>toggleWater(layer));
+});
+
+// Logout
+document.getElementById("logoutBtn").onclick = () => {
+  alert("Logged out!");
+};
+
+// Date picker
+const datePicker = document.getElementById("datePicker");
+datePicker.valueAsDate = new Date();
+datePicker.addEventListener("change", () => {
+  drawnItems.eachLayer(layer => updatePolygon(layer));
+});
+
+// View mode
+const viewModeSelect = document.getElementById("viewMode");
+viewModeSelect.addEventListener("change", () => {
+  drawnItems.eachLayer(layer => updatePolygon(layer));
+});
+</script>
+
+</body>
+</html>
