@@ -9,7 +9,7 @@
     z-index: -1;
 }
 
-/* Centered login container */
+/* Centered login form */
 .login-container {
     position: absolute;
     top: 50%;
@@ -18,7 +18,7 @@
     max-width: 400px;
     width: 90%;
     padding: 30px;
-    background: rgba(255, 255, 255, 0.9);
+    background: rgba(255, 255, 255, 0.85); /* semi-transparent white */
     border-radius: 10px;
     text-align: center;
 }
@@ -33,4 +33,18 @@
     padding: 10px 20px;
     margin: 10px 0;
     cursor: pointer;
+}
+
+.login-container h2 {
+    margin-bottom: 20px;
+    color: #2E8B57;
+}
+
+.login-container a {
+    color: #2E8B57;
+    text-decoration: none;
+}
+
+.login-container a:hover {
+    text-decoration: underline;
 }
