@@ -1,43 +1,27 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Sign Up</title>
-    <link rel="stylesheet" href="css/signup.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sign Up - Palm Oil Planner</title>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<div class="bg-image"></div>
-<div class="overlay"></div>
-
-<div class="container">
-    <div class="signup-box">
-        <h2>Create Account</h2>
-
-        <input id="firstname" type="text" placeholder="First Name">
-        <input id="lastname" type="text" placeholder="Last Name">
-        <input id="username" type="text" placeholder="Username">
-        <input id="password" type="password" placeholder="Password">
-        <input id="confirmPassword" type="password" placeholder="Confirm Password">
-
-        <div class="checkbox-container">
-            <label>
-                <input id="tnc" type="checkbox">
-                I agree to the Terms & Conditions
-            </label>
-        </div>
-
-        <button id="signupBtn" disabled>Sign Up</button>
-
-        <p class="link">
-            Already have an account?
-            <a href="index.html">Login</a>
-        </p>
-
-        <p id="message"></p>
-    </div>
+<div class="signup-container">
+    <img src="img/palm-oil-signup.jpg" alt="Palm Oil">
+    <h2>Sign Up</h2>
+    <input type="text" id="firstname" placeholder="First Name">
+    <input type="text" id="lastname" placeholder="Last Name">
+    <input type="text" id="su-username" placeholder="Username">
+    <input type="password" id="su-password" placeholder="Password">
+    <input type="password" id="su-cpassword" placeholder="Confirm Password">
+    <label><input type="checkbox" id="tnc"> I agree to Terms</label>
+    <button id="signupBtn" disabled>Sign Up</button>
+    <p>Already have an account? <a href="index.html">Login</a></p>
 </div>
 
 <script src="js/signup.js"></script>
 </body>
 </html>
+
