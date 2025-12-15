@@ -9,7 +9,7 @@ loginBtn.addEventListener("click", () => {
     let user = accounts.find(acc => acc.username === username.value && acc.password === password.value);
 
     if (user) {
-        // Save current user for dashboard
+        // Save current user for home/dashboard
         localStorage.setItem("currentUser", JSON.stringify(user));
         window.location.href = "home.html";
     } else {
