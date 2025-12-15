@@ -1,109 +1,76 @@
-// home.js with OpenWeatherMap
+const admin = JSON.parse(localStorage.getItem("currentUser"));
+document.getElementById("adminName").innerText = admin.firstname;
 
-const OPENWEATHER_KEY = "adb0eb54d909230353f3589a97c08521"; // <-- replace with your key
+// Map center (Kuala Kubu Bharu)
+const map = L.map('map').setView([3.5639, 101.6596], 14);
 
-document.addEventListener("DOMContentLoaded", () => {
-    const username = localStorage.getItem("currentUser");
-    if (!username) window.location.href = "index.html";
-    else document.getElementById("welcome").innerText = `Hello, ${username}`;
+// OpenStreetMap tiles (FREE)
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap'
+}).addTo(map);
 
-    document.getElementById("logoutBtn").addEventListener("click", () => {
-        localStorage.removeItem("currentUser");
-        window.location.href = "index.html";
-    });
+// Draw controls
+const drawnItems = new L.FeatureGroup();
+map.addLayer(drawnItems);
 
-    const map = L.map("map").setView([3.5630, 101.6030], 16); // B44 KM41
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution: "&copy; OpenStreetMap"
-    }).addTo(map);
-
-    const drawnItems = new L.FeatureGroup();
-    map.addLayer(drawnItems);
-
-    const drawControl = new L.Control.Draw({
-        edit: { featureGroup: drawnItems },
-        draw: { polyline: false, circle: false, rectangle: false, marker: false, circlemarker: false, polygon: { allowIntersection: false, showArea: true } }
-    });
-    map.addControl(drawControl);
-
-    const polygons = [];
-
-    async function fetchWeather(lat, lon) {
-        const url = `https://api.openweathermap.org/data/3.0/onecall?lat=${lat}&lon=${lon}&exclude=minutely,hourly,alerts&units=metric&appid=${OPENWEATHER_KEY}`;
-        const response = await fetch(url);
-        const data = await response.json();
-        const daily = data.daily.slice(0,7);
-        return daily.map(day => day.rain && day.rain>0 ? "Rain" : "No Rain");
+const drawControl = new L.Control.Draw({
+    draw: {
+        polygon: true,
+        marker: false,
+        polyline: false,
+        circle: false,
+        rectangle: false,
+        circlemarker: false
+    },
+    edit: {
+        featureGroup: drawnItems
     }
+});
+map.addControl(drawControl);
 
-    async function updateCalendar() {
-        const calendar = document.getElementById("calendar");
-        calendar.innerHTML = "<tr><th>Day</th><th>Polygon</th><th>Weather</th><th>Watering</th></tr>";
+// Weather API
+const WEATHER_KEY = "adb0eb54d909230353f3589a97c08521";
 
-        for (let index = 0; index < polygons.length; index++) {
-            const poly = polygons[index];
-            if (!poly.weather) {
-                const latlngs = poly.layer.getBounds().getCenter();
-                poly.weather = await fetchWeather(latlngs.lat, latlngs.lng);
-            }
+// Handle polygon creation
+map.on(L.Draw.Event.CREATED, async function (e) {
+    const layer = e.layer;
+    drawnItems.addLayer(layer);
 
-            poly.weather.forEach((dayWeather, dayIndex) => {
-                const row = document.createElement("tr");
-                row.innerHTML = `
-                    <td>Day ${dayIndex+1}</td>
-                    <td>Polygon ${index+1}</td>
-                    <td>${dayWeather}</td>
-                    <td><input type="checkbox" class="water-check" data-poly="${index}" data-day="${dayIndex}" ${dayWeather==="Rain" ? "disabled" : ""}></td>
-                `;
-                calendar.appendChild(row);
-            });
-        }
+    const center = layer.getBounds().getCenter();
+    const weather = await fetchWeather(center.lat, center.lng);
 
-        calculateCost();
-        document.querySelectorAll(".water-check").forEach(cb => cb.addEventListener("change", calculateCost));
-    }
+    layer.weather = weather;
+    updatePolygonColor(layer);
+});
 
-    function calculateCost() {
-        let total = 0;
-        document.querySelectorAll(".water-check").forEach(cb => {
-            if(cb.checked) total += 10;
-        });
-        document.getElementById("water-cost").innerText = `Total Cost: RM${total.toFixed(2)}`;
-    }
+// Fetch 7-day forecast
+async function fetchWeather(lat, lon) {
+    const url = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${WEATHER_KEY}`;
+    const res = await fetch(url);
+    const data = await res.json();
+    return data.list;
+}
 
-    map.on(L.Draw.Event.CREATED, async function (e) {
-        const layer = e.layer;
-        drawnItems.addLayer(layer);
-        polygons.push({ layer: layer, weather: null });
-        await updateCalendar();
+// Check rain on selected date
+function isRaining(weatherList, date) {
+    return weatherList.some(w => {
+        return w.dt_txt.startsWith(date) && w.rain;
     });
+}
 
-    map.on("draw:edited", updateCalendar);
-    map.on("draw:deleted", updateCalendar);
-    document.getElementById("datePicker").addEventListener("change", updateCalendar);
+// Update polygon color
+function updatePolygonColor(layer) {
+    const date = document.getElementById("datePicker").value;
+    if (!date || !layer.weather) return;
 
-    document.getElementById("whatsappBtn").addEventListener("click", ()=>{
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-        let y = 10;
-        doc.text("Palm Oil Watering Report", 10, y);
-        y+=10;
-        polygons.forEach((poly,index)=>{
-            doc.text(`Polygon ${index+1}:`,10,y); y+=10;
-            poly.weather.forEach((dayWeather, dayIndex)=>{
-                const checkbox = document.querySelector(`.water-check[data-poly="${index}"][data-day="${dayIndex}"]`);
-                const watering = checkbox && checkbox.checked ? "Yes" : "No";
-                doc.text(`Day ${dayIndex+1}: ${dayWeather}, Watering: ${watering}`,10,y);
-                y+=10;
-            });
-            y+=5;
-        });
-        const totalCost = document.getElementById("water-cost").innerText;
-        doc.text(totalCost,10,y);
-        doc.save("Watering_Report.pdf");
+    if (isRaining(layer.weather, date)) {
+        layer.setStyle({ color: "blue" });
+    } else {
+        layer.setStyle({ color: "green" });
+    }
+}
 
-        const message = `Palm Oil Watering Report\n${totalCost}\nPlease see attached PDF.`;
-        const waUrl = `https://wa.me/60123456789?text=${encodeURIComponent(message)}`;
-        window.open(waUrl,"_blank");
-    });
+// Update all polygons when date changes
+document.getElementById("datePicker").addEventListener("change", () => {
+    drawnItems.eachLayer(layer => updatePolygonColor(layer));
 });
