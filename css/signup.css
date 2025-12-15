@@ -1,29 +1,87 @@
-body, html {
-  margin: 0;
-  padding: 0;
-  height: 100%;
-  font-family: Arial, sans-serif;
-  background: url('img/palm-oil-signup.jpg') no-repeat center center fixed;
-  background-size: cover;
+/* Page background image */
+body {
+    margin: 0;
+    height: 100vh;
+    font-family: Arial, sans-serif;
+    background: url('../img/palm-oil-signup.jpg') no-repeat center center fixed;
+    background-size: cover;
 }
 
+/* Signup form container */
 .signup-container {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 2;
-  background: rgba(255,255,255,0.85);
-  padding: 30px;
-  border-radius: 10px;
-  text-align: center;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 400px;
+    padding: 30px;
+    background: rgba(255, 255, 255, 0.88);
+    border-radius: 12px;
+    text-align: center;
 }
 
-.terms {
-  margin-top: 10px;
-  text-align: left;
+/* Title */
+.signup-container h2 {
+    margin-bottom: 20px;
+    color: #2E8B57;
 }
 
-#signupBtn {
-  margin-top: 10px;
+/* Inputs */
+.signup-container input[type="text"],
+.signup-container input[type="password"] {
+    width: 80%;
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+}
+
+/* Checkbox aligned with inputs */
+.checkbox-container {
+    width: 80%;
+    margin: 10px auto;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 8px;
+}
+
+.checkbox-container label {
+    white-space: nowrap;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+/* Button */
+.signup-container button {
+    width: 80%;
+    padding: 10px;
+    margin-top: 15px;
+    border: none;
+    border-radius: 6px;
+    background-color: #2E8B57;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.signup-container button:disabled {
+    background-color: #aaa;
+    cursor: not-allowed;
+}
+
+/* Login link */
+.login-link {
+    margin-top: 15px;
+    font-size: 14px;
+}
+
+.login-link a {
+    color: #2E8B57;
+    text-decoration: none;
+}
+
+.login-link a:hover {
+    text-decoration: underline;
 }
