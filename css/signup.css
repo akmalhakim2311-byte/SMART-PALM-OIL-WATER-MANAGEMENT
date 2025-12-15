@@ -1,0 +1,39 @@
+.signup-container {
+    position: relative; 
+    max-width: 400px; 
+    margin: 80px auto; 
+    padding: 30px;
+    background: rgba(255,255,255,0.9); 
+    border-radius: 10px; 
+    text-align: center;
+}
+
+.signup-container img.signup-img {
+    width: 100%;
+    border-radius: 10px;
+    margin-bottom: 15px;
+}
+
+.signup-container input {
+    width: 80%; 
+    padding: 10px; 
+    margin: 10px 0;
+}
+
+.signup-container button {
+    padding: 10px 20px; 
+    margin: 10px 0; 
+    cursor: pointer;
+}
+
+.signup-container label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 10px 0;
+    cursor: pointer;
+}
+
+.signup-container input[type="checkbox"] {
+    margin-right: 10px;
+}
