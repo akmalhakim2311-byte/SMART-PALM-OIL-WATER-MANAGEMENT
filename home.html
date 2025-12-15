@@ -2,35 +2,42 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Palm Oil Irrigation Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Palm Oil Dashboard</title>
 
+<!-- External CSS -->
+<link rel="stylesheet" href="home-style.css">
+
+<!-- Leaflet CSS -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
-<link rel="stylesheet" href="https://unpkg.com/leaflet-draw/dist/leaflet.draw.css">
-<link rel="stylesheet" href="css/home.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css">
 </head>
-
 <body>
 
 <header>
-  <h2>Welcome, <span id="adminName"></span></h2>
+  <h2>Hello, <span id="adminName"></span></h2>
   <button id="logoutBtn">Logout</button>
 </header>
 
 <div class="controls">
-  <label>Select Date:</label>
+  <label for="datePicker">Select Date:</label>
   <input type="date" id="datePicker">
-  <button id="sendReceipt">Send Receipt (WhatsApp)</button>
+  <button id="sendReceipt">Send Receipt via WhatsApp</button>
+  <span>Total Cost: RM <span id="totalCost">0.00</span></span>
 </div>
 
 <div id="map"></div>
 
-<div class="summary">
-  <h3>Total Cost: RM <span id="totalCost">0.00</span></h3>
-</div>
-
+<!-- Leaflet JS -->
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-<script src="https://unpkg.com/leaflet-draw/dist/leaflet.draw.js"></script>
-<script src="js/home.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/leaflet-geometryutil@0.9.3/src/leaflet.geometryutil.min.js"></script>
+
+<!-- jsPDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<!-- Custom JS -->
+<script src="home.js"></script>
 
 </body>
 </html>
