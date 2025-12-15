@@ -1,22 +1,18 @@
-document.addEventListener("DOMContentLoaded", () => {
-    const loginBtn = document.getElementById("loginBtn");
-    const username = document.getElementById("username");
-    const password = document.getElementById("password");
+// login.js
 
-    loginBtn.addEventListener("click", () => {
-        const user = username.value.trim();
-        const pass = password.value.trim();
+const loginBtn = document.getElementById("loginBtn");
+const username = document.getElementById("username");
+const password = document.getElementById("password");
 
-        if (!user || !pass) { alert("Please enter username and password!"); return; }
+loginBtn.addEventListener("click", () => {
+    let accounts = JSON.parse(localStorage.getItem("accounts")) || [];
+    let user = accounts.find(acc => acc.username === username.value && acc.password === password.value);
 
-        const accounts = JSON.parse(localStorage.getItem("accounts")) || [];
-        const account = accounts.find(acc => acc.username === user && acc.password === pass);
-
-        if (account) {
-            localStorage.setItem("currentUser", account.username);
-            window.location.href = "home.html";
-        } else {
-            alert("Invalid username or password!");
-        }
-    });
+    if (user) {
+        // Save current user for dashboard
+        localStorage.setItem("currentUser", JSON.stringify(user));
+        window.location.href = "home.html";
+    } else {
+        alert("Invalid username or password!");
+    }
 });
