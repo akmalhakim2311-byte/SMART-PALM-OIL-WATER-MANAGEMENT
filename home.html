@@ -2,42 +2,29 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dashboard - Palm Oil Planner</title>
+<title>Home Dashboard</title>
 
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css"/>
-<link rel="stylesheet" href="css/home.css"/>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet-draw/dist/leaflet.draw.css">
+<link rel="stylesheet" href="css/home.css">
 </head>
 <body>
 
-<div class="header">
-    <h2>Palm Oil Smart Water Planner</h2>
-    <div id="welcome"></div>
-    <button id="logoutBtn">Logout</button>
+<h2>Hello, <span id="adminName"></span> 👋</h2>
+
+<div class="controls">
+    <label>Select Date:</label>
+    <input type="date" id="datePicker">
+    <button id="calculateBtn">Calculate Cost</button>
 </div>
 
-<div class="main-container">
-    <div class="map-container">
-        <div id="map"></div>
-    </div>
+<div id="map"></div>
 
-    <div class="control-panel">
-        <label for="datePicker">Select start date:</label>
-        <input type="date" id="datePicker" value="2025-12-16">
+<div id="summary"></div>
 
-        <h3>7-Day Water Plan</h3>
-        <table id="calendar"></table>
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet-draw/dist/leaflet.draw.js"></script>
+<script src="js/home.js"></script>
 
-        <div id="water-cost">Total Cost: RM0.00</div>
-
-        <button id="whatsappBtn">Send Report via WhatsApp & PDF</button>
-    </div>
-</div>
-
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
-<script src="js/home.js" defer></script>
 </body>
 </html>
