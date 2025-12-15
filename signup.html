@@ -3,62 +3,34 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sign Up</title>
-<link rel="stylesheet" href="signup-style.css">
+<title>Sign Up - Palm Oil Planner</title>
+<link rel="stylesheet" href="css/signup.css">
 </head>
 <body>
 
 <div class="signup-container">
-  <h2>Sign Up</h2>
-  <input type="text" id="firstname" placeholder="First Name">
-  <input type="text" id="lastname" placeholder="Last Name">
-  <input type="text" id="username" placeholder="Username">
-  <input type="password" id="password" placeholder="Password">
-  <input type="password" id="confirmpassword" placeholder="Confirm Password">
-  <div class="terms">
-    <input type="checkbox" id="tnc"> <label for="tnc">I agree to the Terms and Conditions</label>
-  </div>
-  <button id="signupBtn" disabled>Sign Up</button>
-  <p>Already have an account? <a href="login.html">Login</a></p>
-  <p id="message" style="color:red;"></p>
+    <h2>Create Account</h2>
+
+    <input type="text" id="firstname" placeholder="First Name">
+    <input type="text" id="lastname" placeholder="Last Name">
+    <input type="text" id="su-username" placeholder="Username">
+    <input type="password" id="su-password" placeholder="Password">
+    <input type="password" id="su-cpassword" placeholder="Confirm Password">
+
+    <!-- Checkbox aligned with inputs -->
+    <div class="checkbox-container">
+        <input type="checkbox" id="tnc">
+        <label for="tnc">I agree to the Terms and Conditions</label>
+    </div>
+
+    <button id="signupBtn" disabled>Sign Up</button>
+
+    <p class="login-link">
+        Already have an account?
+        <a href="index.html">Login</a>
+    </p>
 </div>
 
-<script>
-const tncCheckbox = document.getElementById("tnc");
-const signupBtn = document.getElementById("signupBtn");
-
-tncCheckbox.onchange = () => {
-  signupBtn.disabled = !tncCheckbox.checked;
-};
-
-signupBtn.onclick = () => {
-  const firstname = document.getElementById("firstname").value.trim();
-  const lastname = document.getElementById("lastname").value.trim();
-  const username = document.getElementById("username").value.trim();
-  const password = document.getElementById("password").value.trim();
-  const confirm = document.getElementById("confirmpassword").value.trim();
-
-  if(!firstname || !lastname || !username || !password || !confirm) {
-    document.getElementById("message").textContent = "Please fill all fields.";
-    return;
-  }
-  if(password !== confirm) {
-    document.getElementById("message").textContent = "Passwords do not match.";
-    return;
-  }
-
-  let accounts = JSON.parse(localStorage.getItem("accounts")) || [];
-  if(accounts.find(a => a.username===username)) {
-    document.getElementById("message").textContent = "Username already exists.";
-    return;
-  }
-
-  accounts.push({ firstname, lastname, username, password });
-  localStorage.setItem("accounts", JSON.stringify(accounts));
-  alert("Account created! You can now login.");
-  window.location.href = "login.html";
-};
-</script>
-
+<script src="js/signup.js"></script>
 </body>
 </html>
