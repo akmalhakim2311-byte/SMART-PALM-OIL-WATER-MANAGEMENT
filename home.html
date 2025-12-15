@@ -4,9 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Palm Oil Dashboard</title>
+<link rel="stylesheet" href="home-style.css">
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css">
-<link rel="stylesheet" href="home.css">
+<style>
+  body { margin:0; font-family: Arial; }
+  header { display:flex; justify-content:space-between; align-items:center; background:#2e8b57; color:white; padding:10px 20px; }
+  header button { padding:5px 10px; background:#fff; color:#2e8b57; border:none; border-radius:4px; cursor:pointer; }
+  .controls { padding:10px 20px; display:flex; align-items:center; }
+  #map { width:100%; height:600px; }
+</style>
 </head>
 <body>
 
@@ -17,14 +24,7 @@
 
 <div class="controls">
   <label>Select Date:</label>
-  <input type="date" id="datePicker">
-
-  <label style="margin-left:20px;">View Mode:</label>
-  <select id="viewMode">
-    <option value="rain">Rain Probability</option>
-    <option value="water">Water ON/OFF</option>
-  </select>
-
+  <input type="date" id="datePicker" style="margin-left:10px;">
   <span style="margin-left:20px;">Total Cost: RM <span id="totalCost">0.00</span></span>
 </div>
 
@@ -32,7 +32,118 @@
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
-<script src="home.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", async function() {
 
+  // ---- Check current user ----
+  const user = JSON.parse(localStorage.getItem("currentUser"));
+  if(!user) { window.location.href = "login.html"; return; }
+  document.getElementById("adminName").textContent = user.firstname;
+
+  // ---- Map setup ----
+  const map = L.map("map").setView([3.8127, 102.3140], 15); // FELDA Jengka
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    attribution: "© OpenStreetMap contributors"
+  }).addTo(map);
+
+  const drawnItems = new L.FeatureGroup();
+  map.addLayer(drawnItems);
+
+  const drawControl = new L.Control.Draw({
+    draw: { polygon:true, polyline:false, rectangle:false, circle:false, marker:false },
+    edit: { featureGroup: drawnItems }
+  });
+  map.addControl(drawControl);
+
+  const COST_PER_AREA = 0.05;
+  let totalCost = 0;
+  function updateTotal() {
+    totalCost = 0;
+    drawnItems.eachLayer(layer => {
+      if(layer.waterOn && layer.cost) totalCost += parseFloat(layer.cost);
+    });
+    document.getElementById("totalCost").textContent = totalCost.toFixed(2);
+  }
+
+  function calculateArea(layer) {
+    return L.GeometryUtil.geodesicArea(layer.getLatLngs()[0]);
+  }
+
+  // ---- Weather API ----
+  const API_KEY = "adb0eb54d909230353f3589a97c08521";
+  const LAT = 3.8127;
+  const LON = 102.3140;
+  let weatherData = [];
+  try {
+    const res = await fetch(`https://api.openweathermap.org/data/2.5/onecall?lat=${LAT}&lon=${LON}&exclude=current,minutely,hourly,alerts&units=metric&appid=${API_KEY}`);
+    const data = await res.json();
+    if(data && data.daily) weatherData = data.daily;
+  } catch(err) {
+    console.error("Weather fetch failed", err);
+  }
+
+  function getRainProbability(date) {
+    const selectedDate = new Date(date).setHours(0,0,0,0);
+    for(let day of weatherData) {
+      const dayDate = new Date(day.dt*1000).setHours(0,0,0,0);
+      if(dayDate === selectedDate) return (day.pop || 0);
+    }
+    return 0;
+  }
+
+  // ---- Polygon update ----
+  function updatePolygon(layer) {
+    layer.waterOn = layer.waterOn || false;
+    const area = calculateArea(layer);
+    const cost = (area * COST_PER_AREA).toFixed(2);
+    layer.area = area;
+    layer.cost = cost;
+
+    const date = document.getElementById("datePicker").value;
+    const rainProb = getRainProbability(date);
+    layer.raining = rainProb > 0.5;
+
+    if(layer.raining) {
+      layer.setStyle({ color:"blue", fillColor:"blue", fillOpacity:0.4 });
+      layer.waterOn = false;
+    } else {
+      layer.setStyle({ color:"green", fillColor:"green", fillOpacity:0.4 });
+    }
+
+    layer.bindPopup(`
+      Area: ${area.toFixed(2)} m²<br>
+      Cost: RM ${cost}<br>
+      Watering ${layer.waterOn?"ON":"OFF"}<br>
+      Rain Prob: ${(rainProb*100).toFixed(0)}%
+    `);
+    updateTotal();
+  }
+
+  function toggleWater(layer) {
+    if(layer.raining) return alert("Cannot water: It is raining!");
+    layer.waterOn = !layer.waterOn;
+    updatePolygon(layer);
+  }
+
+  map.on(L.Draw.Event.CREATED, function(e){
+    const layer = e.layer;
+    layer.waterOn = false;
+    drawnItems.addLayer(layer);
+    updatePolygon(layer);
+    layer.on("click", ()=>toggleWater(layer));
+  });
+
+  document.getElementById("datePicker").valueAsDate = new Date();
+  document.getElementById("datePicker").addEventListener("change", ()=>{
+    drawnItems.eachLayer(layer => updatePolygon(layer));
+  });
+
+  document.getElementById("logoutBtn").onclick = ()=>{
+    localStorage.removeItem("currentUser");
+    window.location.href = "login.html";
+  };
+
+});
+</script>
 </body>
 </html>
