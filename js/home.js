@@ -46,7 +46,7 @@ const COST_PER_AREA = 0.05; // RM per m²
 let totalCost = 0;
 
 // ===== WEATHER CHECK (OpenWeatherMap) =====
-const WEATHER_API_KEY = "YOUR_OPENWEATHERMAP_API_KEY";
+const WEATHER_API_KEY = "adb0eb54d909230353f3589a97c08521";
 
 async function isRaining(lat, lng, date) {
   const url = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lng}&appid=${WEATHER_API_KEY}`;
