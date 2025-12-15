@@ -30,14 +30,16 @@ body {
     background-color:#FF4500;
 }
 
+/* Container for map and sidebar */
 .main-container {
     display:flex;
     flex-direction: row;
-    height: calc(100vh - 60px);
+    height: calc(100vh - 60px); /* full viewport minus header */
 }
 
 .map-container {
     flex:2;
+    height:100%;
 }
 
 #map {
