@@ -1,61 +1,41 @@
-// Remove spaces while typing
-function removeSpaces(input) {
-    input.value = input.value.replace(/\s/g, '');
-}
+const usernameInput = document.getElementById("username");
+const passwordInput = document.getElementById("password");
+const loginBtn = document.getElementById("loginBtn");
+const message = document.getElementById("message");
 
-// Close button
-function closeApp() {
-    if (confirm("Do you want to close this window?")) {
-        window.close();
-    }
-}
+// Remove spaces
+[usernameInput, passwordInput].forEach(input => {
+    input.addEventListener("input", () => {
+        input.value = input.value.replace(/\s/g, "");
+    });
+});
 
-// Login button
-function login() {
-    let username = document.getElementById("username").value.trim();
-    let password = document.getElementById("password").value.trim();
-    let message = document.getElementById("message");
+loginBtn.addEventListener("click", () => {
 
-    if (username === "" || password === "") {
-        message.innerText = "Invalid username or password!";
-        document.getElementById("username").value = "";
-        document.getElementById("password").value = "";
-        document.getElementById("username").focus();
+    const username = usernameInput.value.trim();
+    const password = passwordInput.value.trim();
+
+    if (!username || !password) {
+        message.textContent = "Invalid username or password!";
         return;
     }
 
-    // Get accounts from localStorage
-    let accounts = JSON.parse(localStorage.getItem("accounts")) || [];
+    const accounts = JSON.parse(localStorage.getItem("accounts")) || [];
 
-    let loginSuccess = false;
-    let firstname = "";
-    let lastname = "";
+    const user = accounts.find(acc =>
+        acc.username === username && acc.password === password
+    );
 
-    for (let i = 0; i < accounts.length; i++) {
-        if (accounts[i].username === username &&
-            accounts[i].password === password) {
+    if (user) {
+        // Save logged-in user session
+        localStorage.setItem("loggedInUser", JSON.stringify(user));
 
-            loginSuccess = true;
-            firstname = accounts[i].firstname;
-            lastname = accounts[i].lastname;
-            break;
-        }
-    }
-
-    if (loginSuccess) {
-        sessionStorage.setItem("currentUser", JSON.stringify({
-            username: username,
-            firstname: firstname,
-            lastname: lastname
-        }));
-
-        // Redirect to home page
+        // Go to home page
         window.location.href = "home.html";
-
     } else {
-        message.innerText = "No accounts found! Please sign up first.";
-        document.getElementById("username").value = "";
-        document.getElementById("password").value = "";
-        document.getElementById("username").focus();
+        message.textContent = "No account found. Please sign up first.";
+        usernameInput.value = "";
+        passwordInput.value = "";
+        usernameInput.focus();
     }
-}
+});
