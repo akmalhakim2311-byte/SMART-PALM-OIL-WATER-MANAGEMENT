@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Palm Oil Dashboard</title>
+    <link rel="stylesheet" href="css/home.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+</head>
+<body>
+
+<div class="container">
+
+    <h2 id="welcome">Welcome, Admin</h2>
+
+    <!-- Weather Info -->
+    <div class="weather-container">
+        <h3>Weather Today</h3>
+        <p id="weather-status">Loading weather...</p>
+    </div>
+
+    <!-- Palm Oil Map -->
+    <div id="map"></div>
+
+    <!-- Water Supply Info -->
+    <div class="water-container">
+        <h3>Water Supply System</h3>
+        <p id="water-status">Calculating...</p>
+        <p id="water-cost">Total Cost: RM0.00</p>
+    </div>
+
+    <!-- WhatsApp Report -->
+    <button id="whatsappBtn">Send Report via WhatsApp</button>
+
+    <!-- Logout -->
+    <button id="logoutBtn">Logout</button>
+
+</div>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="js/home.js"></script>
+</body>
+</html>
