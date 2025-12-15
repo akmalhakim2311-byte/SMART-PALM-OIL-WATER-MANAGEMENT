@@ -2,34 +2,33 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Palm Oil Water System | Login</title>
+    <title>Login | Palm Oil System</title>
     <link rel="stylesheet" href="css/login.css">
 </head>
 <body>
 
-<!-- Background Video -->
-<video autoplay muted loop playsinline id="bg-video">
-    <source src="video/palm-oil-login.mp4" type="video/mp4">
-    Your browser does not support HTML5 video.
+<!-- Background video (optional – already working for you) -->
+<video autoplay muted loop class="bg-video">
+    <source src="video/palm-oil.mp4" type="video/mp4">
 </video>
 
-<!-- Dark overlay for readability -->
 <div class="overlay"></div>
 
-<!-- Login Box -->
-<div class="login-container">
-    <h2>Admin Login</h2>
+<div class="container">
+    <div class="login-box">
+        <h2>Admin Login</h2>
 
-    <input type="text" id="username" placeholder="Username" oninput="removeSpaces(this)">
-    <input type="password" id="password" placeholder="Password" oninput="removeSpaces(this)">
+        <input id="username" type="text" placeholder="Username">
+        <input id="password" type="password" placeholder="Password">
 
-    <button class="login-btn" onclick="login()">Login</button>
-    <button class="close-btn" onclick="closeApp()">Close</button>
+        <button id="loginBtn">Login</button>
 
-    <div class="message" id="message"></div>
+        <p class="link">
+            Don’t have an account?
+            <a href="signup.html">Sign Up</a>
+        </p>
 
-    <div class="signup">
-        <a href="signup.html">Sign up</a>
+        <p id="message"></p>
     </div>
 </div>
 
