@@ -1,107 +1,86 @@
-/* Reset default spacing */
 * {
     box-sizing: border-box;
-    margin: 0;
-    padding: 0;
+    font-family: Arial, sans-serif;
 }
 
-/* Full screen video */
-#bg-video {
+body {
+    margin: 0;
+    height: 100vh;
+}
+
+/* Background video */
+.bg-video {
     position: fixed;
-    top: 0;
-    left: 0;
-    min-width: 100%;
-    min-height: 100%;
+    width: 100%;
+    height: 100%;
     object-fit: cover;
     z-index: -2;
 }
 
-/* Dark overlay for readability */
+/* Overlay */
 .overlay {
     position: fixed;
-    top: 0;
-    left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0,0,0,0.45);
+    background: rgba(0,0,0,0.6);
     z-index: -1;
 }
 
-/* Center login box */
-body {
-    font-family: Arial, sans-serif;
+/* Center container */
+.container {
     display: flex;
     justify-content: center;
     align-items: center;
     height: 100vh;
 }
 
-/* Login container */
-.login-container {
-    width: 320px;
-    background: rgba(255, 255, 255, 0.95);
-    padding: 24px 22px;
-    border-radius: 10px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.4);
-    z-index: 1;
-}
-
-/* Title */
-h2 {
+/* Login box */
+.login-box {
+    background: rgba(255,255,255,0.95);
+    padding: 30px;
+    width: 350px;
+    border-radius: 12px;
     text-align: center;
-    margin-bottom: 18px;
-    font-size: 22px;
 }
 
 /* Inputs */
-input {
+.login-box input {
     width: 100%;
-    padding: 9px;
-    margin-top: 10px;
-    font-size: 14px;
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 6px;
     border: 1px solid #ccc;
-    border-radius: 5px;
 }
 
-/* Buttons */
+/* Button */
 button {
     width: 100%;
-    padding: 9px;
-    margin-top: 12px;
-    font-size: 14px;
-    border-radius: 5px;
+    padding: 10px;
+    background: #2e7d32;
+    color: white;
     border: none;
+    border-radius: 6px;
+    font-size: 16px;
     cursor: pointer;
 }
 
-/* Login button */
-.login-btn {
-    background: #0275d8;
-    color: white;
+button:hover {
+    background: #1b5e20;
 }
 
-/* Close button */
-.close-btn {
-    background: #d9534f;
-    color: white;
-}
-
-/* Error message */
-.message {
-    color: red;
-    text-align: center;
+/* Links */
+.link {
     margin-top: 10px;
-    font-size: 13px;
+    font-size: 14px;
 }
 
-/* Signup link */
-.signup {
-    text-align: center;
-    margin-top: 14px;
-    font-size: 13px;
-}
-
-.signup a {
-    color: #0275d8;
+.link a {
+    color: #2e7d32;
+    font-weight: bold;
     text-decoration: none;
+}
+
+#message {
+    color: red;
+    margin-top: 10px;
 }
