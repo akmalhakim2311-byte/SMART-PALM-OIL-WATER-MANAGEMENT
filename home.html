@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Home Dashboard</title>
+<title>Smart Palm Oil Dashboard</title>
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
 <link rel="stylesheet" href="https://unpkg.com/leaflet-draw/dist/leaflet.draw.css">
@@ -10,12 +10,15 @@
 </head>
 <body>
 
-<h2>Hello, <span id="adminName"></span> 👋</h2>
+<header>
+  <h2>Hello, <span id="adminName"></span> 👋</h2>
+  <button onclick="logout()">Logout</button>
+</header>
 
 <div class="controls">
-    <label>Select Date:</label>
-    <input type="date" id="datePicker">
-    <button id="calculateBtn">Calculate Cost</button>
+  <label>Date:</label>
+  <input type="date" id="datePicker">
+  <button onclick="calculateTotal()">Calculate</button>
 </div>
 
 <div id="map"></div>
