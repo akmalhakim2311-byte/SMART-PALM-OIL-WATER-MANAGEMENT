@@ -2,42 +2,52 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Palm Oil Smart Water Planner</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Palm Oil Water Planner</title>
 
-<!-- CSS -->
-<link rel="stylesheet" href="css/home.css">
-<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css"/>
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
+
+<!-- Custom CSS -->
+<link rel="stylesheet" href="style.css">
+
+<!-- jsPDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 </head>
 <body>
-<div class="container">
-    <h2 id="welcome">Welcome, Admin</h2>
 
-    <div class="weather-container">
-        <h3>7-Day Weather Forecast</h3>
-        <div id="forecast"></div>
-    </div>
-
-    <div id="map"></div>
-
-    <div class="water-container">
-        <h3>Water Supply Planning</h3>
-        <div id="planning-info">Draw plantation areas on the map and plan watering</div>
-        <table id="calendar"></table>
-        <p id="water-cost">Total Cost: RM0.00</p>
-    </div>
-
-    <button id="whatsappBtn">Send Report via WhatsApp</button>
+<div class="header">
+    <h2>Palm Oil Smart Water Planner</h2>
+    <div id="welcome"></div>
     <button id="logoutBtn">Logout</button>
 </div>
 
-<!-- JS Libraries -->
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<div class="main-container">
+    <div class="map-container">
+        <div id="map"></div>
+    </div>
 
-<!-- Home JS -->
+    <div class="control-panel">
+        <label for="datePicker">Select start date:</label>
+        <input type="date" id="datePicker" value="2025-12-16">
+
+        <h3>7-Day Water Plan</h3>
+        <table id="calendar"></table>
+
+        <div id="water-cost">Total Cost: RM0.00</div>
+
+        <button id="whatsappBtn">Send Report via WhatsApp & PDF</button>
+    </div>
+</div>
+
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+
+<!-- Custom JS -->
 <script src="js/home.js"></script>
+
 </body>
 </html>
