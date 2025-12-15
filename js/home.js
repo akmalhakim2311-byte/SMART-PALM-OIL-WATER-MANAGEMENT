@@ -1,8 +1,9 @@
-// ===== LOGIN CHECK =====
+// ===== LOGIN CHECK ===== 
 const user = JSON.parse(localStorage.getItem("currentUser"));
 if (!user) {
   window.location.href = "index.html";
 }
+
 document.getElementById("adminName").textContent = user.firstname;
 
 // ===== LOGOUT =====
@@ -27,7 +28,13 @@ const drawnItems = new L.FeatureGroup();
 map.addLayer(drawnItems);
 
 const drawControl = new L.Control.Draw({
-  draw: { polygon: true, marker: false, polyline: false, rectangle: false, circle: false },
+  draw: {
+    polygon: true,
+    marker: true,      // enable marker for toggling water
+    polyline: false,
+    rectangle: false,
+    circle: false
+  },
   edit: { featureGroup: drawnItems }
 });
 map.addControl(drawControl);
@@ -50,83 +57,75 @@ async function isRaining(lat, lng, date) {
   );
 }
 
-// ===== HELPER: UPDATE TOTAL COST =====
+// ===== UPDATE TOTAL COST =====
 function updateTotal() {
   let totalCost = 0;
   drawnItems.eachLayer(layer => {
-    if (layer.waterOn) totalCost += parseFloat(layer.cost);
+    if (layer.waterOn) totalCost += parseFloat(layer.cost || 0);
   });
   document.getElementById("totalCost").textContent = totalCost.toFixed(2);
 }
 
 // ===== DRAW EVENT =====
-map.on(L.Draw.Event.CREATED, async function(e) {
+map.on(L.Draw.Event.CREATED, async function (e) {
   const layer = e.layer;
   drawnItems.addLayer(layer);
 
-  const center = layer.getBounds().getCenter();
-  const raining = await isRaining(center.lat, center.lng, datePicker.value);
-
-  const area = L.GeometryUtil.geodesicArea(layer.getLatLngs()[0]);
-  const cost = (area * COST_PER_AREA).toFixed(2);
-
-  layer.area = area;
-  layer.cost = cost;
-  layer.waterOn = false; // default OFF
-
-  if (raining) {
-    layer.setStyle({ color: "blue" });
-    layer.bindPopup("🌧️ Raining today – Watering disabled");
-  } else {
-    layer.setStyle({ color: "green" });
-    layer.bindPopup(`
-      ☀️ No rain<br>
-      Area: ${area.toFixed(2)} m²<br>
-      Cost: RM ${cost}<br>
-      <b>Click polygon to toggle water</b>
-    `);
-
-    // Toggle watering on click
+  if (layer instanceof L.Marker) {
+    // Marker click toggles water ON/OFF for nearest polygon
     layer.on("click", () => {
-      layer.waterOn = !layer.waterOn;
-      layer.bindPopup(`
-        ☀️ No rain<br>
-        Area: ${area.toFixed(2)} m²<br>
-        Cost: RM ${cost}<br>
-        <b>Watering ${layer.waterOn ? "ON" : "OFF"}</b>
-      `).openPopup();
-      updateTotal();
+      let nearestPolygon = null;
+      let minDist = Infinity;
+
+      drawnItems.eachLayer(l => {
+        if (l instanceof L.Polygon) {
+          const dist = layer.getLatLng().distanceTo(l.getBounds().getCenter());
+          if (dist < minDist) {
+            minDist = dist;
+            nearestPolygon = l;
+          }
+        }
+      });
+
+      if (nearestPolygon) {
+        nearestPolygon.waterOn = !nearestPolygon.waterOn;
+        nearestPolygon.bindPopup(`
+          ${nearestPolygon.waterOn ? "💧 Water ON" : "❌ Water OFF"}
+        `).openPopup();
+        updateTotal();
+      }
     });
+  }
+
+  if (layer instanceof L.Polygon) {
+    const center = layer.getBounds().getCenter();
+    const raining = await isRaining(center.lat, center.lng, datePicker.value);
+    const area = L.GeometryUtil.geodesicArea(layer.getLatLngs()[0]);
+    const cost = (area * COST_PER_AREA).toFixed(2);
+
+    layer.area = area;
+    layer.cost = cost;
+    layer.waterOn = false; // initially OFF
+
+    if (raining) {
+      layer.setStyle({ color: "blue" });
+      layer.bindPopup("🌧️ Raining today – Watering disabled");
+    } else {
+      layer.setStyle({ color: "green" });
+      layer.bindPopup(`☀️ No rain<br>Click marker nearby to toggle water`).openPopup();
+    }
   }
 });
 
-// ===== WHATSAPP PDF RECEIPT =====
+// ===== WHATSAPP RECEIPT =====
 document.getElementById("sendReceipt").onclick = () => {
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF();
-  doc.setFontSize(14);
-  doc.text("Palm Oil Irrigation Receipt", 10, 20);
-  doc.text(`Admin: ${user.firstname}`, 10, 30);
-  doc.text(`Date: ${datePicker.value}`, 10, 40);
+  const msg = `
+Palm Oil Irrigation Receipt
+Admin: ${user.firstname}
+Date: ${datePicker.value}
+Total Cost: RM ${document.getElementById("totalCost").textContent}
+`;
 
-  let y = 50;
-  drawnItems.eachLayer((layer, i) => {
-    if (layer.waterOn) {
-      doc.text(`Polygon ${i+1}: Area ${layer.area.toFixed(2)} m², Cost RM ${layer.cost}`, 10, y);
-      y += 10;
-    }
-  });
-
-  const total = Array.from(drawnItems.getLayers())
-    .filter(l => l.waterOn)
-    .reduce((sum, l) => sum + parseFloat(l.cost), 0);
-
-  doc.text(`Total Cost: RM ${total.toFixed(2)}`, 10, y + 10);
-
-  // Save PDF as blob URI for WhatsApp
-  const pdfData = doc.output("datauristring");
-  const whatsappUrl = "https://wa.me/60174909836?text=" + encodeURIComponent(
-    "Please see attached PDF receipt: " + pdfData
-  );
-  window.open(whatsappUrl, "_blank");
+  const url = "https://wa.me/60174909836?text=" + encodeURIComponent(msg);
+  window.open(url, "_blank");
 };
