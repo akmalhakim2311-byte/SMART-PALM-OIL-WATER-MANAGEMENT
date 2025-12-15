@@ -9,22 +9,22 @@ else document.getElementById("welcome").textContent = `Welcome, ${user.firstname
 // Variables
 // -------------------------
 const apiKey = "YOUR_OPENWEATHERMAP_API_KEY"; // Replace with your API key
-const lat = 3.5609;
-const lon = 101.6585;
+const defaultLat = 3.6015;
+const defaultLon = 101.5585;
 const costPerLiter = 0.005;
 
-let weatherData = null;
-let waterPlan = {}; // {areaName:{day0:volume, day1:volume,...}}
+let weatherDataMap = {}; // polygonName -> weather array (7 days)
+let waterPlan = {}; // polygonName -> { YYYY-MM-DD: volume }
 
-// DOM
 const forecastEl = document.getElementById("forecast");
 const calendarEl = document.getElementById("calendar");
 const waterCostEl = document.getElementById("water-cost");
+const datePicker = document.getElementById("datePicker");
 
 // -------------------------
 // Initialize map
 // -------------------------
-const map = L.map('map').setView([lat, lon], 14);
+const map = L.map('map').setView([defaultLat, defaultLon], 14);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution:'&copy; OpenStreetMap contributors'
 }).addTo(map);
@@ -45,54 +45,79 @@ map.addControl(drawControl);
 map.on(L.Draw.Event.CREATED, function(event){
     const layer = event.layer;
     drawnItems.addLayer(layer);
-    updatePolygonStyle(layer);
+    const areaName = `Plantation Area ${drawnItems.getLayers().indexOf(layer)+1}`;
+    layer.options.name = areaName;
+    updatePolygonWeather(layer);
     bindPolygonClick(layer);
     savePolygons();
 });
-map.on(L.Draw.Event.EDITED, savePolygons);
+
+map.on(L.Draw.Event.EDITED, ()=>{
+    drawnItems.eachLayer(updatePolygonWeather);
+    savePolygons();
+});
 map.on(L.Draw.Event.DELETED, savePolygons);
 
 // -------------------------
-// Load saved polygons
+// Polygon weather
 // -------------------------
-function loadPolygons(){
-    const data = JSON.parse(localStorage.getItem("plantationPolygons")||"[]");
-    data.forEach((coords, index)=>{
-        const poly = L.polygon(coords, {color:'green'}).addTo(drawnItems);
-        updatePolygonStyle(poly);
-        bindPolygonClick(poly, `Plantation Area ${index+1}`);
-    });
-}
+async function updatePolygonWeather(layer){
+    const coords = layer.getBounds().getCenter();
+    try{
+        const res = await fetch(`https://api.openweathermap.org/data/2.5/onecall?lat=${coords.lat}&lon=${coords.lng}&exclude=minutely,hourly,alerts&units=metric&appid=${apiKey}`);
+        const data = await res.json();
+        const startDate = new Date(datePicker.value);
+        weatherDataMap[layer.options.name] = [];
 
-// -------------------------
-// Update polygon style based on today's weather
-// -------------------------
-function updatePolygonStyle(layer){
-    if(!weatherData) return;
-    const todayWeather = weatherData.daily[0].weather[0].main;
-    if(todayWeather === "Rain"){
-        layer.setStyle({color:'blue'});
-        layer.bindPopup(`${getPolygonName(layer)} (Rain Today)`);
-    } else {
-        layer.setStyle({color:'green'});
-        layer.bindPopup(`${getPolygonName(layer)} (No Rain Today)`);
+        // Fill 7-day forecast from selected date
+        for(let i=0;i<7;i++){
+            const dt = new Date(startDate);
+            dt.setDate(startDate.getDate()+i);
+            // find nearest day in API data
+            let nearest = data.daily.reduce((prev,curr)=>{
+                return Math.abs(new Date(curr.dt*1000)-dt) < Math.abs(new Date(prev.dt*1000)-dt) ? curr : prev;
+            });
+            weatherDataMap[layer.options.name].push(nearest.weather[0].main);
+        }
+
+        // Set today's color
+        const todayWeather = weatherDataMap[layer.options.name][0];
+        if(todayWeather==="Rain") layer.setStyle({color:'blue'});
+        else layer.setStyle({color:'green'});
+
+        layer.bindPopup(`${layer.options.name} (${todayWeather} on ${datePicker.value})`);
+        buildCalendar();
+
+    } catch(err){
+        console.error("Weather fetch failed", err);
     }
 }
 
-// Helper to get polygon name
-function getPolygonName(layer){
-    return layer.options.name || `Plantation Area ${drawnItems.getLayers().indexOf(layer)+1}`;
+// -------------------------
+// Load polygons from localStorage
+// -------------------------
+function loadPolygons(){
+    const data = JSON.parse(localStorage.getItem("plantationPolygons")||"[]");
+    data.forEach(async (coords, index)=>{
+        const poly = L.polygon(coords,{color:'green'}).addTo(drawnItems);
+        const areaName = `Plantation Area ${index+1}`;
+        poly.options.name = areaName;
+        await updatePolygonWeather(poly);
+        bindPolygonClick(poly, areaName);
+    });
 }
+loadPolygons();
 
 // -------------------------
-// Polygon click → Water Planning
+// Bind polygon click
 // -------------------------
 function bindPolygonClick(layer, defaultName=null){
-    const areaName = defaultName || getPolygonName(layer);
+    const areaName = defaultName || layer.options.name;
     layer.options.name = areaName;
+
     layer.on('click', ()=>{
-        const todayWeather = weatherData.daily[0].weather[0].main;
-        if(todayWeather === "Rain"){
+        const todayWeather = weatherDataMap[areaName] ? weatherDataMap[areaName][0] : "Unknown";
+        if(todayWeather==="Rain"){
             alert(`${areaName} will rain today. No watering needed.`);
             return;
         }
@@ -101,102 +126,68 @@ function bindPolygonClick(layer, defaultName=null){
 }
 
 // -------------------------
-// Save polygons to LocalStorage
-// -------------------------
-function savePolygons(){
-    const data = [];
-    drawnItems.eachLayer(l => data.push(l.getLatLngs()[0].map(p=>[p.lat,p.lng])));
-    localStorage.setItem("plantationPolygons", JSON.stringify(data));
-}
-
-// Initial load
-loadPolygons();
-
-// -------------------------
-// Fetch 7-day forecast
-// -------------------------
-fetch(`https://api.openweathermap.org/data/2.5/onecall?lat=${lat}&lon=${lon}&exclude=minutely,hourly,alerts&units=metric&appid=${apiKey}`)
-.then(res=>res.json())
-.then(data=>{
-    weatherData = data;
-    displayForecast(data.daily);
-    buildCalendar(); // build calendar after forecast
-});
-
-// Display forecast
-function displayForecast(daily){
-    forecastEl.innerHTML="";
-    daily.slice(0,7).forEach((day,i)=>{
-        const dt = new Date(day.dt*1000);
-        const dayName = dt.toLocaleDateString('en-US',{weekday:'short'});
-        const weather = day.weather[0].main;
-        const div = document.createElement("div");
-        div.innerHTML=`<strong>${dayName}</strong><br>${weather}`;
-        forecastEl.appendChild(div);
-    });
-}
-
-// -------------------------
-// Plan water supply for 7 days
+// Plan water per polygon
 // -------------------------
 function planWater(areaName){
-    if(!weatherData) { alert("Weather not loaded yet."); return; }
-
+    const startDate = new Date(datePicker.value);
     if(!waterPlan[areaName]) waterPlan[areaName]={};
 
-    for(let i=0; i<7; i++){
-        const dayWeather = weatherData.daily[i].weather[0].main;
-        let waterVolume = 0;
-        if(dayWeather !== "Rain"){
-            let input = prompt(`Day ${i+1} (${dayWeather}): Enter water volume in liters for ${areaName}:`, waterPlan[areaName][`day${i}`] || "500");
-            waterVolume = parseFloat(input) || 0;
-        }
-        waterPlan[areaName][`day${i}`] = waterVolume;
+    for(let i=0;i<7;i++){
+        const dt = new Date(startDate);
+        dt.setDate(startDate.getDate()+i);
+        const dayKey = dt.toISOString().split('T')[0];
+        const forecast = weatherDataMap[areaName][i];
+        if(forecast==="Rain"){ waterPlan[areaName][dayKey]=0; continue; }
+
+        const input = prompt(`Enter water volume in liters for ${areaName} on ${dayKey}:`, waterPlan[areaName][dayKey]||500);
+        waterPlan[areaName][dayKey] = parseFloat(input)||0;
     }
 
-    buildCalendar(); // refresh calendar
+    buildCalendar();
     updateCost();
-    alert(`7-day water plan saved for ${areaName}`);
+    alert(`7-day water plan saved for ${areaName} starting ${datePicker.value}`);
 }
 
 // -------------------------
-// Build interactive calendar
+// Build calendar
 // -------------------------
 function buildCalendar(){
     calendarEl.innerHTML="";
     const header = document.createElement("tr");
     header.innerHTML="<th>Plantation Area</th>";
+
+    const startDate = new Date(datePicker.value);
     for(let i=0;i<7;i++){
-        const dt = new Date(weatherData.daily[i].dt*1000);
-        const dayName = dt.toLocaleDateString('en-US',{weekday:'short'});
+        const dt = new Date(startDate);
+        dt.setDate(startDate.getDate()+i);
+        const dayName = dt.toLocaleDateString('en-US',{weekday:'short', day:'numeric'});
         header.innerHTML += `<th>${dayName}</th>`;
     }
     calendarEl.appendChild(header);
 
-    drawnItems.eachLayer((layer, idx)=>{
-        const areaName = getPolygonName(layer);
-        if(!waterPlan[areaName]) waterPlan[areaName]={};
-
+    drawnItems.eachLayer(layer=>{
+        const areaName = layer.options.name;
         const row = document.createElement("tr");
         row.innerHTML = `<td>${areaName}</td>`;
-        for(let d=0; d<7; d++){
-            const dayWeather = weatherData.daily[d].weather[0].main;
-            const vol = waterPlan[areaName][`day${d}`] || 0;
-            const disabled = (dayWeather==="Rain") ? "disabled" : "";
+        for(let i=0;i<7;i++){
+            const dt = new Date(startDate);
+            dt.setDate(startDate.getDate()+i);
+            const dayKey = dt.toISOString().split('T')[0];
+            const vol = waterPlan[areaName] ? waterPlan[areaName][dayKey]||0 : 0;
+            const disabled = (weatherDataMap[areaName][i]==="Rain") ? "disabled" : "";
             const cell = document.createElement("td");
-            cell.innerHTML = `<input type="number" min="0" class="day-volume" data-area="${areaName}" data-day="${d}" value="${vol}" ${disabled}>`;
+            cell.innerHTML = `<input type="number" min="0" class="day-volume" data-area="${areaName}" data-day="${dayKey}" value="${vol}" ${disabled}>`;
             row.appendChild(cell);
         }
         calendarEl.appendChild(row);
     });
 
-    // Listen to input changes
     document.querySelectorAll("input.day-volume").forEach(input=>{
         input.addEventListener("input", e=>{
             const area = e.target.dataset.area;
-            const day = e.target.dataset.day;
+            const dayKey = e.target.dataset.day;
             if(!waterPlan[area]) waterPlan[area]={};
-            waterPlan[area][day] = parseFloat(e.target.value)||0;
+            waterPlan[area][dayKey] = parseFloat(e.target.value)||0;
             updateCost();
         });
     });
@@ -205,7 +196,7 @@ function buildCalendar(){
 }
 
 // -------------------------
-// Update total water cost
+// Update total cost
 // -------------------------
 function updateCost(){
     let totalWater = 0;
@@ -218,7 +209,7 @@ function updateCost(){
 }
 
 // -------------------------
-// WhatsApp & PDF
+// WhatsApp & PDF report
 // -------------------------
 document.getElementById("whatsappBtn").addEventListener("click", ()=>{
     let totalWater = 0;
@@ -228,7 +219,7 @@ document.getElementById("whatsappBtn").addEventListener("click", ()=>{
         report += `${area}:\n`;
         for(const day in waterPlan[area]){
             const water = waterPlan[area][day];
-            if(water>0) report += `Day ${parseInt(day)+1}: ${water} L%0A`;
+            if(water>0) report += `Day ${day}: ${water} L%0A`;
             totalWater += water;
         }
     }
@@ -238,7 +229,6 @@ document.getElementById("whatsappBtn").addEventListener("click", ()=>{
     const phone = "60123456789"; // Replace with admin WhatsApp
     window.open(`https://wa.me/${phone}?text=${report}`,"_blank");
 
-    // PDF
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
     doc.text("Palm Oil Water Supply 7-Day Plan",10,10);
@@ -247,7 +237,7 @@ document.getElementById("whatsappBtn").addEventListener("click", ()=>{
     for(const area in waterPlan){
         doc.text(area,10,y); y+=10;
         for(const day in waterPlan[area]){
-            if(waterPlan[area][day]>0) doc.text(`Day ${parseInt(day)+1}: ${waterPlan[area][day]} L`,10,y), y+=10;
+            if(waterPlan[area][day]>0) doc.text(`${day}: ${waterPlan[area][day]} L`,10,y), y+=10;
         }
     }
     doc.text(`Total Cost: RM${totalCost.toFixed(2)}`,10,y+10);
@@ -261,6 +251,15 @@ document.getElementById("logoutBtn").addEventListener("click", ()=>{
     localStorage.removeItem("loggedInUser");
     window.location.href="index.html";
 });
+
+// -------------------------
+// Save polygons
+// -------------------------
+function savePolygons(){
+    const data = [];
+    drawnItems.eachLayer(l=>data.push(l.getLatLngs()[0].map(p=>[p.lat,p.lng])));
+    localStorage.setItem("plantationPolygons", JSON.stringify(data));
+}
 
 // -------------------------
 // Map Legend
