@@ -4,29 +4,33 @@ body {
 }
 
 header {
-  background: #2e8b57;
-  color: white;
-  padding: 10px;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  background: #1b5e20;
+  color: white;
+  padding: 10px 20px;
 }
 
-button {
-  padding: 6px 12px;
+#logoutBtn {
+  padding: 6px 14px;
+  border: none;
+  background: #c62828;
+  color: white;
   cursor: pointer;
 }
 
 .controls {
   padding: 10px;
-  background: #f4f4f4;
+  background: #f1f1f1;
 }
 
 #map {
-  height: 65vh;
+  height: 70vh;
 }
 
-#summary {
+.summary {
   padding: 10px;
-  background: #eee;
+  background: #e8f5e9;
+  font-size: 18px;
 }
