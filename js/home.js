@@ -14,34 +14,38 @@ document.getElementById("logoutBtn").onclick = () => {
 const datePicker = document.getElementById("datePicker");
 datePicker.valueAsDate = new Date();
 
-// ===== MAP (FELDA JENGKA, PAHANG) =====
+// ===== MAP INIT (FELDA JENGKA) =====
 const map = L.map("map").setView([3.7026, 102.5455], 14);
 
 L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
   attribution: "© OpenStreetMap"
 }).addTo(map);
 
-// ===== DRAW SETUP =====
+// ===== DRAW GROUP =====
 const drawnItems = new L.FeatureGroup();
 map.addLayer(drawnItems);
 
+// ===== DRAW CONTROL (ONLY POLYGON & CIRCLE) =====
 const drawControl = new L.Control.Draw({
   draw: {
-    polygon: true,
+    polygon: {
+      allowIntersection: false,
+      showArea: true
+    },
     circle: true,
     marker: false,
     polyline: false,
-    rectangle: false
+    rectangle: false,
+    circlemarker: false
   },
-  edit: {
-    featureGroup: drawnItems
-  }
+  edit: false
 });
 map.addControl(drawControl);
 
 // ===== COST =====
 const COST_PER_AREA = 0.05;
 let totalCost = 0;
+let waterLabels = [];
 
 // ===== WEATHER =====
 const WEATHER_API_KEY = "adb0eb54d909230353f3589a97c08521";
@@ -51,20 +55,20 @@ async function isRaining(lat, lng, date) {
     `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lng}&appid=${WEATHER_API_KEY}`
   );
   const data = await res.json();
-  const selected = new Date(date).toDateString();
+  const selectedDate = new Date(date).toDateString();
 
   return data.list.some(i =>
-    new Date(i.dt_txt).toDateString() === selected &&
+    new Date(i.dt_txt).toDateString() === selectedDate &&
     i.weather[0].main.toLowerCase().includes("rain")
   );
 }
 
 // ===== AREA =====
-function areaOf(layer) {
+function polygonArea(layer) {
   return L.GeometryUtil.geodesicArea(layer.getLatLngs()[0]);
 }
 
-// ===== UPDATE TOTAL =====
+// ===== TOTAL =====
 function updateTotal() {
   totalCost = 0;
   drawnItems.eachLayer(l => {
@@ -85,7 +89,7 @@ map.on(L.Draw.Event.CREATED, async e => {
     layer.waterOn = false;
     const center = layer.getBounds().getCenter();
     const raining = await isRaining(center.lat, center.lng, datePicker.value);
-    const area = areaOf(layer);
+    const area = polygonArea(layer);
     layer.cost = (area * COST_PER_AREA).toFixed(2);
 
     if (raining) {
@@ -97,7 +101,7 @@ map.on(L.Draw.Event.CREATED, async e => {
         Area: ${area.toFixed(2)} m²<br>
         Cost: RM ${layer.cost}<br>
         Status: <b>Not confirmed</b><br>
-        <small>Place circle marker to proceed</small>
+        <small>Draw & click circle to activate water</small>
       `);
     }
   }
@@ -107,25 +111,25 @@ map.on(L.Draw.Event.CREATED, async e => {
     layer.bindPopup("Click to confirm water usage");
 
     layer.on("click", () => {
-      let target = null;
+      let targetPolygon = null;
 
       drawnItems.eachLayer(p => {
         if (p instanceof L.Polygon && p.getBounds().contains(layer.getLatLng())) {
-          target = p;
+          targetPolygon = p;
         }
       });
 
-      if (!target) {
+      if (!targetPolygon) {
         alert("Circle must be inside a polygon");
         return;
       }
 
-      if (target.waterOn) return;
+      if (targetPolygon.waterOn) return;
 
-      target.waterOn = true;
-      target.setStyle({ color: "darkgreen" });
+      targetPolygon.waterOn = true;
+      targetPolygon.setStyle({ color: "darkgreen" });
 
-      L.marker(target.getBounds().getCenter(), {
+      const label = L.marker(targetPolygon.getBounds().getCenter(), {
         icon: L.divIcon({
           className: "water-label",
           html: "💧 Water ON",
@@ -134,12 +138,13 @@ map.on(L.Draw.Event.CREATED, async e => {
         interactive: false
       }).addTo(map);
 
+      waterLabels.push(label);
       updateTotal();
 
-      target.bindPopup(`
+      targetPolygon.bindPopup(`
         💧 Water ON<br>
-        Area: ${areaOf(target).toFixed(2)} m²<br>
-        Cost: RM ${target.cost}
+        Area: ${polygonArea(targetPolygon).toFixed(2)} m²<br>
+        Cost: RM ${targetPolygon.cost}
       `);
 
       layer.bindPopup("✅ Water activated");
@@ -150,10 +155,24 @@ map.on(L.Draw.Event.CREATED, async e => {
 // ===== DATE CHANGE =====
 datePicker.addEventListener("change", () => {
   drawnItems.eachLayer(l => {
-    if (l instanceof L.Polygon) l.waterOn = false;
+    if (l instanceof L.Polygon) {
+      l.waterOn = false;
+      l.setStyle({ color: "green" });
+    }
   });
+  waterLabels.forEach(label => map.removeLayer(label));
+  waterLabels = [];
   updateTotal();
 });
+
+// ===== CLEAR ALL =====
+document.getElementById("clearAll").onclick = () => {
+  drawnItems.clearLayers();
+  waterLabels.forEach(label => map.removeLayer(label));
+  waterLabels = [];
+  totalCost = 0;
+  document.getElementById("totalCost").textContent = "0.00";
+};
 
 // ===== PDF + WHATSAPP =====
 document.getElementById("generatePDF").onclick = () => {
@@ -168,7 +187,7 @@ document.getElementById("generatePDF").onclick = () => {
   drawnItems.eachLayer(l => {
     if (l instanceof L.Polygon && l.waterOn) {
       doc.text(
-        `Area: ${areaOf(l).toFixed(2)} m² | Cost RM ${l.cost}`,
+        `Area: ${polygonArea(l).toFixed(2)} m² | Cost RM ${l.cost}`,
         10,
         y
       );
@@ -176,7 +195,7 @@ document.getElementById("generatePDF").onclick = () => {
     }
   });
 
-  doc.text(`Total: RM ${totalCost.toFixed(2)}`, 10, y + 10);
+  doc.text(`Total Cost: RM ${totalCost.toFixed(2)}`, 10, y + 10);
   doc.save("receipt.pdf");
 
   const msg = encodeURIComponent(
