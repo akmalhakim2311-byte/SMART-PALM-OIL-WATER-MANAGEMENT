@@ -1,36 +1,110 @@
+/* ===== GENERAL STYLING ===== */
 body {
   margin: 0;
-  font-family: Arial, sans-serif;
+  font-family: Arial, Helvetica, sans-serif;
+  background-color: #f5f5f5;
 }
 
+/* ===== HEADER ===== */
 header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: #1b5e20;
+  padding: 15px 30px;
+  background-color: #2c3e50;
   color: white;
-  padding: 10px 20px;
 }
 
-#logoutBtn {
-  padding: 6px 14px;
+header h2 {
+  margin: 0;
+  font-size: 20px;
+}
+
+header button {
+  padding: 8px 15px;
+  font-size: 14px;
+  background-color: #e74c3c;
   border: none;
-  background: #c62828;
   color: white;
+  border-radius: 5px;
   cursor: pointer;
 }
 
+header button:hover {
+  background-color: #c0392b;
+}
+
+/* ===== CONTROLS ===== */
 .controls {
-  padding: 10px;
-  background: #f1f1f1;
+  display: flex;
+  align-items: center;
+  padding: 15px 30px;
+  gap: 10px;
+  background-color: #ecf0f1;
 }
 
+.controls label {
+  font-weight: bold;
+}
+
+.controls input[type="date"] {
+  padding: 5px;
+  font-size: 14px;
+}
+
+.controls button {
+  padding: 6px 12px;
+  font-size: 14px;
+  background-color: #3498db;
+  border: none;
+  color: white;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.controls button:hover {
+  background-color: #2980b9;
+}
+
+/* ===== MAP ===== */
 #map {
-  height: 70vh;
+  height: 600px;
+  width: 100%;
+  margin: 10px 0;
+  border: 2px solid #bdc3c7;
+  border-radius: 5px;
 }
 
+/* ===== SUMMARY ===== */
 .summary {
-  padding: 10px;
-  background: #e8f5e9;
-  font-size: 18px;
+  padding: 15px 30px;
+  background-color: #ecf0f1;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.summary h3 {
+  margin: 0;
+}
+
+/* ===== LEAFLET DRAW POPUP CUSTOMIZATION ===== */
+.leaflet-popup-content-wrapper {
+  font-size: 14px;
+}
+
+/* ===== RESPONSIVE ===== */
+@media screen and (max-width: 768px) {
+  .controls {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
 }
