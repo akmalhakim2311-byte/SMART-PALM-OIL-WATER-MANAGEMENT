@@ -13,34 +13,13 @@ document.getElementById("logoutBtn").onclick = () => {
 
 // ===== DATE PICKER =====
 const datePicker = document.getElementById("datePicker");
+datePicker.valueAsDate = new Date();
 
 // ===== MAP INITIALIZATION (FELDA Jengka) =====
 const map = L.map("map").setView([3.7026, 102.5455], 14);
 L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
   attribution: "© OpenStreetMap"
 }).addTo(map);
-
-// ===== DRAW CONTROLS (Polygon & Circle Only) =====
-const drawnItems = new L.FeatureGroup();
-map.addLayer(drawnItems);
-
-const drawControl = new L.Control.Draw({
-  draw: {
-    polygon: true,
-    circle: true,
-    rectangle: false,
-    marker: false,
-    polyline: false
-  },
-  edit: {
-    featureGroup: drawnItems
-  }
-});
-map.addControl(drawControl);
-
-// ===== COST SETTINGS =====
-const COST_PER_AREA = 0.05; // RM per m²
-let totalCost = 0;
 
 // ===== WEATHER =====
 const WEATHER_API_KEY = "adb0eb54d909230353f3589a97c08521";
@@ -58,19 +37,42 @@ async function isRaining(lat, lng, date) {
   );
 }
 
+// ===== DRAW CONTROLS (Only Polygon & Circle) =====
+const drawnItems = new L.FeatureGroup();
+map.addLayer(drawnItems);
+
+const drawControl = new L.Control.Draw({
+  draw: {
+    polygon: true,   // show polygon
+    circle: true,    // show circle
+    rectangle: false,
+    marker: false,
+    polyline: false
+  },
+  edit: {
+    featureGroup: drawnItems
+  }
+});
+map.addControl(drawControl);
+
+// ===== COST SETTINGS =====
+const COST_PER_AREA = 0.05; // RM per m²
+let totalCost = 0;
+
 // ===== AREA CALCULATION =====
 function calculateArea(layer) {
   if (layer instanceof L.Circle) {
-    const r = layer.getRadius();
-    return Math.PI * r * r;
-  } else {
+    const radius = layer.getRadius();
+    return Math.PI * radius * radius; // circle area in m²
+  } else if (layer instanceof L.Polygon) {
     return L.GeometryUtil.geodesicArea(layer.getLatLngs()[0]);
   }
+  return 0;
 }
 
 // ===== UPDATE POLYGON/CIRCLE STYLE =====
 async function updateLayer(layer) {
-  const center = layer.getBounds ? layer.getBounds().getCenter() : layer.getLatLng();
+  const center = layer.getBounds().getCenter ? layer.getBounds().getCenter() : layer.getLatLng();
   const raining = await isRaining(center.lat, center.lng, datePicker.value);
 
   if (raining) {
@@ -82,21 +84,26 @@ async function updateLayer(layer) {
     const area = calculateArea(layer);
     const cost = (area * COST_PER_AREA).toFixed(2);
     layer.cost = cost;
-    layer.bindPopup(`☀️ No rain<br>Area: ${area.toFixed(2)} m²<br>Cost: RM ${cost}<br><b>Click circle to toggle Water ON</b>`);
+
+    const popupContent = layer instanceof L.Circle
+      ? `<b>Click circle to toggle Water ON/OFF</b><br>Area: ${area.toFixed(2)} m²<br>Cost: RM ${cost}`
+      : `<b>Click polygon to toggle Water ON/OFF</b><br>Area: ${area.toFixed(2)} m²<br>Cost: RM ${cost}`;
+
+    layer.bindPopup(popupContent);
   }
 
   updateTotal();
 }
 
-// ===== TOGGLE WATER FOR CIRCLE =====
+// ===== TOGGLE WATER =====
 function toggleWater(layer) {
-  if (!(layer instanceof L.Circle)) return; // Only toggle for circle
+  if (layer.waterOn === undefined) layer.waterOn = false;
   layer.waterOn = !layer.waterOn;
   updateLayer(layer);
 }
 
 // ===== DRAW EVENT =====
-map.on(L.Draw.Event.CREATED, async function(e) {
+map.on(L.Draw.Event.CREATED, async function (e) {
   const layer = e.layer;
   layer.waterOn = false;
   drawnItems.addLayer(layer);
@@ -106,9 +113,9 @@ map.on(L.Draw.Event.CREATED, async function(e) {
   layer.on("click", () => toggleWater(layer));
 });
 
-// ===== DATE CHANGE =====
+// ===== DATE CHANGE EVENT =====
 datePicker.addEventListener("change", () => {
-  loadDataForDate(datePicker.value);
+  drawnItems.eachLayer(layer => updateLayer(layer));
 });
 
 // ===== TOTAL COST =====
@@ -120,71 +127,49 @@ function updateTotal() {
   document.getElementById("totalCost").textContent = totalCost.toFixed(2);
 }
 
-// ===== SAVE DATA =====
-document.getElementById("saveData").onclick = () => {
-  const date = datePicker.value;
-  const dataToSave = [];
-
+// ===== SAVE & LOAD PER DATE =====
+function saveData() {
+  const dateKey = datePicker.value;
+  const layersData = [];
   drawnItems.eachLayer(layer => {
-    const latlngs = layer.getLatLngs ? layer.getLatLngs() : [layer.getLatLng()];
-    dataToSave.push({
-      type: layer instanceof L.Circle ? 'circle' : 'polygon',
-      latlngs,
-      waterOn: layer.waterOn || false,
-      cost: layer.cost || 0
-    });
+    const type = layer instanceof L.Circle ? "circle" : "polygon";
+    const latlngs = layer instanceof L.Circle ? layer.getLatLng() : layer.getLatLngs();
+    layersData.push({ type, latlngs, waterOn: layer.waterOn, cost: layer.cost });
   });
+  localStorage.setItem("mapData-" + dateKey, JSON.stringify(layersData));
+}
 
-  localStorage.setItem('irrigation_' + date, JSON.stringify(dataToSave));
-  alert('Data saved for ' + date);
-};
-
-// ===== LOAD DATA =====
-function loadDataForDate(date) {
+function loadData() {
+  const dateKey = datePicker.value;
+  const saved = JSON.parse(localStorage.getItem("mapData-" + dateKey)) || [];
   drawnItems.clearLayers();
-  const savedData = JSON.parse(localStorage.getItem('irrigation_' + date));
-  if (!savedData) return;
-
-  savedData.forEach(item => {
+  saved.forEach(d => {
     let layer;
-    if (item.type === 'polygon') {
-      layer = L.polygon(item.latlngs);
-    } else if (item.type === 'circle') {
-      layer = L.circle(item.latlngs[0], { radius: item.latlngs[0].radius || 10 });
+    if (d.type === "circle") {
+      layer = L.circle(d.latlngs, { radius: 50, color: d.waterOn ? "darkgreen" : "green" });
+    } else {
+      layer = L.polygon(d.latlngs, { color: d.waterOn ? "darkgreen" : "green" });
     }
-    layer.waterOn = item.waterOn;
-    layer.cost = item.cost;
-    drawnItems.addLayer(layer);
-
-    if (layer.waterOn) {
-      layer.bindPopup(`<b>Water ON</b><br>Cost: RM ${layer.cost}`);
-    }
-
+    layer.waterOn = d.waterOn;
+    layer.cost = d.cost;
+    layer.bindPopup("Click to toggle Water ON/OFF");
     layer.on("click", () => toggleWater(layer));
+    drawnItems.addLayer(layer);
   });
-
   updateTotal();
 }
 
-// ===== LOAD LAST SAVED DATE ON PAGE LOAD =====
-const savedDates = Object.keys(localStorage).filter(k => k.startsWith('irrigation_'));
-if (savedDates.length > 0) {
-  const lastDateKey = savedDates[savedDates.length - 1];
-  const lastDate = lastDateKey.replace('irrigation_', '');
-  datePicker.value = lastDate;
-  loadDataForDate(lastDate);
-} else {
-  datePicker.valueAsDate = new Date();
-}
+document.getElementById("saveBtn").onclick = saveData;
+datePicker.addEventListener("change", loadData);
 
 // ===== CLEAR ALL =====
-document.getElementById("clearAll").onclick = () => {
+document.getElementById("clearBtn").onclick = () => {
   drawnItems.clearLayers();
   updateTotal();
 };
 
-// ===== PDF/WHATSAPP RECEIPT =====
-document.getElementById("generatePDF").onclick = () => {
+// ===== PDF RECEIPT =====
+document.getElementById("generatePDF").onclick = async () => {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF();
 
@@ -198,7 +183,7 @@ document.getElementById("generatePDF").onclick = () => {
   drawnItems.eachLayer(layer => {
     if (layer.waterOn) {
       const area = calculateArea(layer).toFixed(2);
-      doc.text(`Area: ${area} m² | Cost: RM ${layer.cost}`, 10, y);
+      doc.text(`${layer instanceof L.Circle ? 'Circle' : 'Polygon'}: Area ${area} m² | Cost RM ${layer.cost}`, 10, y);
       y += 10;
     }
   });
