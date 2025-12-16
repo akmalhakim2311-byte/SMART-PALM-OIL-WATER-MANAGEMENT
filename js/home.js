@@ -1,8 +1,6 @@
 // ===== LOGIN CHECK =====
 const user = JSON.parse(localStorage.getItem("currentUser"));
-if (!user) {
-  window.location.href = "index.html";
-}
+if (!user) window.location.href = "index.html";
 document.getElementById("adminName").textContent = user.firstname;
 
 // ===== LOGOUT =====
@@ -21,37 +19,36 @@ L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
   attribution: "© OpenStreetMap"
 }).addTo(map);
 
-// ===== DRAW CONTROLS (ONLY POLYGON + CIRCLE) =====
+// ===== DRAW CONTROLS (only polygon and circle) =====
 const drawnItems = new L.FeatureGroup();
 map.addLayer(drawnItems);
 
 const drawControl = new L.Control.Draw({
   draw: {
-    polygon: { allowIntersection: false, showArea: true },
+    polygon: true,
     circle: true,
-    marker: false,
-    polyline: false,
     rectangle: false,
-    circlemarker: false
+    marker: false,
+    polyline: false
   },
-  edit: { featureGroup: drawnItems, remove: false }
+  edit: {
+    featureGroup: drawnItems
+  }
 });
 map.addControl(drawControl);
 
 // ===== COST SETTINGS =====
-const COST_PER_AREA = 0.05; // RM per m²
+const COST_PER_AREA = 0.05;
 let totalCost = 0;
 
 // ===== WEATHER =====
 const WEATHER_API_KEY = "adb0eb54d909230353f3589a97c08521";
-
 async function isRaining(lat, lng, date) {
   const res = await fetch(
     `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lng}&appid=${WEATHER_API_KEY}`
   );
   const data = await res.json();
   const selectedDate = new Date(date).toDateString();
-
   return data.list.some(i =>
     new Date(i.dt_txt).toDateString() === selectedDate &&
     i.weather[0].main.toLowerCase().includes("rain")
@@ -60,12 +57,17 @@ async function isRaining(lat, lng, date) {
 
 // ===== AREA CALCULATION =====
 function calculateArea(layer) {
-  return L.GeometryUtil.geodesicArea(layer.getLatLngs()[0]);
+  if (layer instanceof L.Circle) {
+    const radius = layer.getRadius();
+    return Math.PI * radius * radius;
+  } else {
+    return L.GeometryUtil.geodesicArea(layer.getLatLngs()[0]);
+  }
 }
 
-// ===== UPDATE POLYGON STYLE =====
-async function updatePolygon(layer) {
-  const center = layer.getBounds().getCenter();
+// ===== UPDATE POLYGON/CIRCLE =====
+async function updateLayer(layer) {
+  const center = layer.getBounds ? layer.getBounds().getCenter() : layer.getLatLng();
   const raining = await isRaining(center.lat, center.lng, datePicker.value);
 
   if (raining) {
@@ -73,19 +75,15 @@ async function updatePolygon(layer) {
     layer.waterOn = false;
     layer.bindPopup("🌧️ Raining today – Watering disabled");
   } else {
+    layer.setStyle({ color: layer.waterOn ? "darkgreen" : "green" });
     const area = calculateArea(layer);
     const cost = (area * COST_PER_AREA).toFixed(2);
     layer.cost = cost;
-
-    layer.setStyle({ color: layer.waterOn ? "darkgreen" : "green" });
-    layer.bindPopup(`
-      ☀️ No rain<br>
-      Area: ${area.toFixed(2)} m²<br>
-      Cost: RM ${cost}<br>
-      <b>Click circle to toggle Water ON/OFF</b>
-    `);
+    layer.bindPopup(layer.waterOn ?
+      `☀️ No rain<br>Area: ${area.toFixed(2)} m²<br>Cost: RM ${cost}<br><b>Water ON</b>` :
+      `☀️ No rain<br>Area: ${area.toFixed(2)} m²<br>Cost: RM ${cost}<br><b>Click to toggle Water ON/OFF</b>`
+    );
   }
-
   updateTotal();
 }
 
@@ -93,7 +91,7 @@ async function updatePolygon(layer) {
 function toggleWater(layer) {
   if (layer.waterOn === undefined) layer.waterOn = false;
   layer.waterOn = !layer.waterOn;
-  updatePolygon(layer);
+  updateLayer(layer);
 }
 
 // ===== DRAW EVENT =====
@@ -102,18 +100,15 @@ map.on(L.Draw.Event.CREATED, async function (e) {
   layer.waterOn = false;
   drawnItems.addLayer(layer);
 
-  if (layer instanceof L.Circle) {
-    // Circle toggle logic
+  if (layer instanceof L.Circle || layer instanceof L.Polygon) {
     layer.on("click", () => toggleWater(layer));
-  } else {
-    // Polygon
-    await updatePolygon(layer);
+    await updateLayer(layer);
   }
 });
 
 // ===== DATE CHANGE EVENT =====
 datePicker.addEventListener("change", () => {
-  drawnItems.eachLayer(layer => updatePolygon(layer));
+  drawnItems.eachLayer(layer => updateLayer(layer));
 });
 
 // ===== TOTAL COST =====
@@ -125,34 +120,20 @@ function updateTotal() {
   document.getElementById("totalCost").textContent = totalCost.toFixed(2);
 }
 
-// ===== SAVE DATA =====
-document.getElementById("saveData").onclick = () => {
-  const saveKey = `irrigation_${datePicker.value}`;
-  const saveData = [];
-
-  drawnItems.eachLayer(layer => {
-    saveData.push({
-      type: layer instanceof L.Circle ? "circle" : "polygon",
-      latlngs: layer.getLatLngs ? layer.getLatLngs() : layer.getLatLng(),
-      radius: layer.getRadius ? layer.getRadius() : null,
-      waterOn: layer.waterOn,
-      cost: layer.cost
-    });
-  });
-
-  localStorage.setItem(saveKey, JSON.stringify(saveData));
-  alert("Data saved for " + datePicker.value);
-};
-
 // ===== CLEAR ALL =====
 document.getElementById("clearAll").onclick = () => {
   drawnItems.clearLayers();
   totalCost = 0;
-  document.getElementById("totalCost").textContent = "0.00";
+  document.getElementById("totalCost").textContent = totalCost.toFixed(2);
+};
+
+// ===== SAVE BUTTON =====
+document.getElementById("saveData").onclick = () => {
+  alert("Data saved for the selected date (placeholder)");
 };
 
 // ===== PDF RECEIPT =====
-document.getElementById("generatePDF").onclick = () => {
+document.getElementById("generatePDF").onclick = async () => {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF();
 
@@ -166,12 +147,13 @@ document.getElementById("generatePDF").onclick = () => {
   drawnItems.eachLayer(layer => {
     if (layer.waterOn) {
       const area = calculateArea(layer).toFixed(2);
-      doc.text(`Polygon: Area ${area} m² | Cost RM ${layer.cost}`, 10, y);
+      doc.text(`Polygon/Circle: Area ${area} m² | Cost RM ${layer.cost}`, 10, y);
       y += 10;
     }
   });
 
   doc.text(`Total Cost: RM ${totalCost.toFixed(2)}`, 10, y + 10);
+
   doc.save("receipt.pdf");
 
   const msg = encodeURIComponent(`Palm Oil Irrigation Receipt\nAdmin: ${user.firstname}\nDate: ${datePicker.value}\nTotal Cost: RM ${totalCost.toFixed(2)}`);
