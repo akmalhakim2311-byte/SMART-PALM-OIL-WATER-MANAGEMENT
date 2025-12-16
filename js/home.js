@@ -43,7 +43,7 @@ map.addControl(drawControl);
 const COST_PER_AREA = 0.05; // RM per m²
 let totalCost = 0;
 
-// ===== WEATHER =====
+// ===== WEATHER CHECK =====
 const WEATHER_API_KEY = "adb0eb54d909230353f3589a97c08521";
 async function isRaining(lat, lng, date) {
   const res = await fetch(
@@ -98,6 +98,12 @@ async function updateLayer(layer) {
 function toggleWater(layer) {
   if (layer.waterOn === undefined) layer.waterOn = false;
   layer.waterOn = !layer.waterOn;
+
+  // If this is a circle marker being activated, make totalCost box permanently visible
+  if (layer instanceof L.Circle && layer.waterOn) {
+    document.getElementById("totalCost").parentElement.style.display = "block";
+  }
+
   updateLayer(layer);
 }
 
@@ -109,7 +115,7 @@ map.on(L.Draw.Event.CREATED, async function (e) {
 
   await updateLayer(layer);
 
-  // Click to toggle water for polygons or circles
+  // Click to toggle water
   layer.on("click", () => toggleWater(layer));
 });
 
@@ -170,6 +176,8 @@ document.getElementById("saveBtn").onclick = () => {
 document.getElementById("clearBtn").onclick = () => {
   drawnItems.clearLayers();
   updateTotal();
+  // Hide total cost box after clearing
+  document.getElementById("totalCost").parentElement.style.display = "none";
 };
 
 // ===== PDF RECEIPT =====
