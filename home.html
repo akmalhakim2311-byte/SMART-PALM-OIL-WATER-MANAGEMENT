@@ -3,10 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <title>Palm Oil Irrigation Dashboard</title>
+
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
 <link rel="stylesheet" href="https://unpkg.com/leaflet-draw/dist/leaflet.draw.css">
 <link rel="stylesheet" href="css/home.css">
 </head>
+
 <body>
 
 <header>
@@ -15,15 +17,20 @@
 </header>
 
 <div class="controls">
-  <label for="datePicker">Select Date:</label>
+  <label>Select Date:</label>
   <input type="date" id="datePicker">
   <button id="saveBtn">Save</button>
-  <button id="clearBtn">Clear All</button>
   <button id="generatePDF">Export PDF + WhatsApp</button>
-  <h3>Total Cost: RM <span id="totalCost">0.00</span></h3>
+  <button id="clearAllBtn">Clear All</button>
 </div>
 
-<div id="map"></div>
+<div id="map">
+  <div class="water-on-label" id="waterOnLabel">💧 Water ON</div>
+</div>
+
+<div class="summary">
+  <h3>Total Cost: RM <span id="totalCost">0.00</span></h3>
+</div>
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet-draw/dist/leaflet.draw.js"></script>
@@ -32,3 +39,4 @@
 
 </body>
 </html>
+
