@@ -204,10 +204,11 @@ document.getElementById("clearBtn").onclick = () => {
   updateTotal(false);
 };
 
-// ===== GENERATE PDF + WHATSAPP =====
+// ===== GENERATE PDF & WHATSAPP =====
 document.getElementById("generatePDF").onclick = async () => {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF();
+
   doc.setFontSize(16);
   doc.text("Palm Oil Irrigation Receipt", 10, 20);
   doc.setFontSize(12);
@@ -215,17 +216,36 @@ document.getElementById("generatePDF").onclick = async () => {
   doc.text(`Date: ${datePicker.value}`, 10, 40);
 
   let y = 50;
+  let anyIrrigation = false;
+
   drawnItems.eachLayer(layer => {
     if (layer instanceof L.Polygon && layer.cost) {
-      doc.text(`Polygon: Area ${layer.area} m² | Cost RM ${layer.cost}`, 10, y);
+      anyIrrigation = true;
+      doc.text(
+        `Polygon: Area ${layer.area} m² | Cost RM ${layer.cost}`,
+        10,
+        y
+      );
       y += 10;
     }
   });
 
-  doc.text(`Total Cost: RM ${totalCost.toFixed(2)}`, 10, y + 10);
-  doc.save("PalmOil_Receipt.pdf");
+  if (!anyIrrigation) {
+    doc.text("No irrigation performed.", 10, y);
+    y += 10;
+  }
 
-  const msg = `Palm Oil Irrigation Receipt\nAdmin: ${user.firstname}\nDate: ${datePicker.value}\nTotal Cost: RM ${totalCost.toFixed(2)}`;
+  doc.text(`Total Cost: RM ${totalCost.toFixed(2)}`, 10, y + 10);
+  doc.text(`Status: ${anyIrrigation ? "Water Used" : "No Water Usage"}`, 10, y + 20);
+
+  // Save PDF
+  const filename = `PalmOil_Receipt_${datePicker.value}.pdf`;
+  doc.save(filename);
+
+  // WhatsApp message text
+  const msg = `Palm Oil Irrigation Receipt\nAdmin: ${user.firstname}\nDate: ${datePicker.value}\nTotal Cost: RM ${totalCost.toFixed(2)}\nStatus: ${anyIrrigation ? "Water Used" : "No Water Usage"}`;
+
+  // Open WhatsApp with pre-filled message
   window.open(`https://wa.me/60174909836?text=${encodeURIComponent(msg)}`, "_blank");
 };
 
