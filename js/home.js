@@ -15,7 +15,7 @@ document.getElementById("logoutBtn").onclick = () => {
 const datePicker = document.getElementById("datePicker");
 datePicker.valueAsDate = new Date();
 
-// ===== MAP INITIALIZATION (FELDA Jengka) =====
+// ===== MAP INITIALIZATION (FELDA JENGKA) =====
 const map = L.map("map").setView([3.7026, 102.5455], 14);
 L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
   attribution: "© OpenStreetMap"
@@ -45,8 +45,6 @@ let totalCost = 0;
 
 // ===== WEATHER CHECK (OpenWeatherMap) =====
 const WEATHER_API_KEY = "adb0eb54d909230353f3589a97c08521";
-
-// Check if polygon will rain on selected date
 async function isRaining(lat, lng, date) {
   const url = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lng}&appid=${WEATHER_API_KEY}`;
   const res = await fetch(url);
@@ -60,11 +58,10 @@ async function isRaining(lat, lng, date) {
 
 // ===== AREA CALCULATION =====
 function calculateArea(layer) {
-  const area = L.GeometryUtil.geodesicArea(layer.getLatLngs()[0]);
-  return area; // in m²
+  return L.GeometryUtil.geodesicArea(layer.getLatLngs()[0]);
 }
 
-// ===== UPDATE POLYGON STYLE =====
+// ===== UPDATE POLYGON STYLE & WATER INDICATOR =====
 async function updatePolygon(layer) {
   const center = layer.getBounds().getCenter();
   const raining = await isRaining(center.lat, center.lng, datePicker.value);
@@ -72,17 +69,36 @@ async function updatePolygon(layer) {
   if (raining) {
     layer.setStyle({ color: "blue" });
     layer.waterOn = false;
+    if (layer.waterLabel) map.removeLayer(layer.waterLabel);
     layer.bindPopup("🌧️ Raining today – Watering disabled");
   } else {
+    // Color depends on water toggle
     layer.setStyle({ color: layer.waterOn ? "darkgreen" : "green" });
+
     const area = calculateArea(layer);
     const cost = (area * COST_PER_AREA).toFixed(2);
     layer.cost = cost;
+
+    // Remove previous label
+    if (layer.waterLabel) map.removeLayer(layer.waterLabel);
+
+    // Add water indicator if ON
+    if (layer.waterOn) {
+      layer.waterLabel = L.marker(center, {
+        icon: L.divIcon({
+          className: "water-label",
+          html: "💧 Water ON",
+          iconSize: [80, 20]
+        }),
+        interactive: false
+      }).addTo(map);
+    }
+
     layer.bindPopup(`
       ☀️ No rain<br>
       Area: ${area.toFixed(2)} m²<br>
       Cost: RM ${cost}<br>
-      <b>Click to toggle Water ON/OFF</b>
+      <b>Click polygon to toggle Water ON/OFF</b>
     `);
   }
   updateTotal();
@@ -98,11 +114,12 @@ function toggleWater(layer) {
 // ===== DRAW EVENT =====
 map.on(L.Draw.Event.CREATED, async function (e) {
   const layer = e.layer;
-  layer.waterOn = false;
+  layer.waterOn = false; // initially off
   drawnItems.addLayer(layer);
 
-  await updatePolygon(layer);
+  await updatePolygon(layer); // show polygon but not counted yet
 
+  // Toggle water on click
   layer.on("click", () => toggleWater(layer));
 });
 
@@ -120,7 +137,7 @@ function updateTotal() {
   document.getElementById("totalCost").textContent = totalCost.toFixed(2);
 }
 
-// ===== PDF RECEIPT =====
+// ===== PDF RECEIPT & WhatsApp =====
 document.getElementById("generatePDF").onclick = async () => {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF();
@@ -142,7 +159,7 @@ document.getElementById("generatePDF").onclick = async () => {
 
   doc.text(`Total Cost: RM ${totalCost.toFixed(2)}`, 10, y + 10);
 
-  // Save PDF temporarily
+  // Save PDF
   doc.save("receipt.pdf");
 
   // WhatsApp send link
