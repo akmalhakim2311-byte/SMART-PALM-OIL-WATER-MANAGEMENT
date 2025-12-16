@@ -88,12 +88,54 @@ async function updateLayer(layer) {
   updateTotal();
 }
 
+// ===== TOTAL COST =====
+function updateTotal(show = false) {
+  totalCost = 0;
+
+  drawnItems.eachLayer(layer => {
+    if (layer instanceof L.Polygon && layer.cost) {
+      totalCost += layer.cost;
+    }
+  });
+
+  document.getElementById("totalCost").textContent = totalCost.toFixed(2);
+  document.getElementById("totalWrapper").style.display = show ? "block" : "none";
+}
+
+// ===== WATER LABEL =====
+function showWaterLabel(circle) {
+  const icon = L.divIcon({
+    className: "water-label",
+    html: "💧 Water ON",
+    iconSize: [80, 24],
+    iconAnchor: [40, -10]
+  });
+  circle._waterLabel = L.marker(circle.getLatLng(), {
+    icon,
+    interactive: false
+  }).addTo(map);
+}
+
 // ===== TOGGLE WATER =====
 function toggleWater(layer) {
   if (layer.waterOn === undefined) layer.waterOn = false;
   layer.waterOn = !layer.waterOn;
   updateLayer(layer);
 }
+
+// ===== DRAW CREATED =====
+map.on(L.Draw.Event.CREATED, async e => {
+  const layer = e.layer;
+  drawnItems.addLayer(layer);
+
+  if (layer instanceof L.Polygon) {
+    const area = polygonArea(layer);
+    layer.cost = area * COST_PER_AREA;
+    layer.bindPopup(
+      `Area: ${area.toFixed(2)} m²<br>Cost: RM ${layer.cost.toFixed(2)}`
+    );
+    layer.on("click", () => updateTotal(false));
+  }
 
 // ===== DRAW EVENT =====
 map.on(L.Draw.Event.CREATED, async function(e) {
