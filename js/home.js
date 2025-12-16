@@ -22,15 +22,8 @@ L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
 // ===== DRAW CONTROLS =====
 const drawnItems = new L.FeatureGroup();
 map.addLayer(drawnItems);
-
 const drawControl = new L.Control.Draw({
-  draw: {
-    polygon: true,
-    circle: true,
-    marker: false,
-    polyline: false,
-    rectangle: false
-  },
+  draw: { polygon: true, circle: true, marker: false, polyline: false, rectangle: false },
   edit: { featureGroup: drawnItems }
 });
 map.addControl(drawControl);
@@ -39,21 +32,21 @@ map.addControl(drawControl);
 const COST_PER_AREA = 0.05;
 let totalCost = 0;
 
-// ===== WATER LABEL TRACKER =====
-let waterLabels = [];
-
 // ===== WEATHER CHECK =====
 const WEATHER_API_KEY = "adb0eb54d909230353f3589a97c08521";
 async function isRaining(lat, lng, date) {
-  const res = await fetch(
-    `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lng}&appid=${WEATHER_API_KEY}`
-  );
-  const data = await res.json();
-  const selectedDate = new Date(date).toDateString();
-  return data.list.some(i =>
-    new Date(i.dt_txt).toDateString() === selectedDate &&
-    i.weather[0].main.toLowerCase().includes("rain")
-  );
+  try {
+    const res = await fetch(`https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lng}&appid=${WEATHER_API_KEY}`);
+    const data = await res.json();
+    const selectedDate = new Date(date).toDateString();
+    return data.list.some(i =>
+      new Date(i.dt_txt).toDateString() === selectedDate &&
+      i.weather[0].main.toLowerCase().includes("rain")
+    );
+  } catch (e) {
+    console.error("Weather API error", e);
+    return false;
+  }
 }
 
 // ===== AREA CALCULATION =====
@@ -61,19 +54,20 @@ function calculateArea(layer) {
   if (layer instanceof L.Polygon) {
     return L.GeometryUtil.geodesicArea(layer.getLatLngs()[0]);
   }
-  return 0;
+  return 0; // Circles do not contribute to cost
 }
 
 // ===== UPDATE LAYER =====
 async function updateLayer(layer) {
   const center = layer.getBounds ? layer.getBounds().getCenter() : layer.getLatLng();
   const raining = await isRaining(center.lat, center.lng, datePicker.value);
+  layer.raining = raining;
 
   if (raining) {
     layer.setStyle?.({ color: "blue" });
     layer.waterOn = false;
     layer.bindPopup("🌧️ Raining – Watering disabled");
-    removeWaterLabel(layer);
+    if (layer._waterLabel) map.removeLayer(layer._waterLabel);
   } else {
     if (layer instanceof L.Polygon) {
       layer.setStyle?.({ color: "green" });
@@ -85,40 +79,50 @@ async function updateLayer(layer) {
     } else if (layer instanceof L.Circle) {
       layer.setStyle?.({ color: layer.waterOn ? "darkgreen" : "green" });
       if (layer.waterOn) showWaterLabel(layer);
+      else if (layer._waterLabel) { map.removeLayer(layer._waterLabel); layer._waterLabel = null; }
     }
   }
-  updateTotal(layer instanceof L.Circle); // show total if circle exists
+  updateTotal();
 }
 
 // ===== WATER LABEL =====
 function showWaterLabel(circle) {
-  removeWaterLabel(circle);
+  if (circle._waterLabel) map.removeLayer(circle._waterLabel);
   const icon = L.divIcon({
     className: "water-label",
     html: "💧 Water ON",
     iconSize: [80, 24],
-    iconAnchor: [40, -15]
+    iconAnchor: [40, -10]
   });
-  const label = L.marker(circle.getLatLng(), { icon, interactive: false }).addTo(map);
-  circle._waterLabel = label;
-  waterLabels.push(label);
+  circle._waterLabel = L.marker(circle.getLatLng(), { icon, interactive: false }).addTo(map);
 }
 
-function removeWaterLabel(circle) {
-  if (circle._waterLabel) {
-    map.removeLayer(circle._waterLabel);
-    waterLabels = waterLabels.filter(l => l !== circle._waterLabel);
-    circle._waterLabel = null;
-  }
+// ===== TOGGLE WATER (Circle Only) =====
+function toggleWater(layer) {
+  if (!(layer instanceof L.Circle) || layer.raining) return;
+  layer.waterOn = !layer.waterOn;
+  updateLayer(layer);
 }
 
-function removeAllWaterLabels() {
-  waterLabels.forEach(label => map.removeLayer(label));
-  waterLabels = [];
-}
+// ===== DRAW CREATED =====
+map.on(L.Draw.Event.CREATED, async e => {
+  const layer = e.layer;
+  layer.waterOn = false;
+  drawnItems.addLayer(layer);
+
+  if (layer instanceof L.Circle) layer.on("click", () => toggleWater(layer));
+  if (layer instanceof L.Polygon) layer.on("click", () => updateTotal(false));
+
+  await updateLayer(layer);
+});
+
+// ===== DATE CHANGE =====
+datePicker.addEventListener("change", () => {
+  loadDateData();
+});
 
 // ===== TOTAL COST =====
-function updateTotal(show = false) {
+function updateTotal(show = true) {
   totalCost = 0;
   drawnItems.eachLayer(layer => {
     if (layer instanceof L.Polygon && layer.cost) totalCost += parseFloat(layer.cost);
@@ -127,40 +131,11 @@ function updateTotal(show = false) {
   document.getElementById("totalWrapper").style.display = show ? "block" : "none";
 }
 
-// ===== TOGGLE WATER (CIRCLE ONLY) =====
-function toggleWater(layer) {
-  if (!(layer instanceof L.Circle)) return;
-  layer.waterOn = !layer.waterOn;
-  updateLayer(layer);
-}
-
-// ===== DRAW EVENT =====
-map.on(L.Draw.Event.CREATED, async e => {
-  const layer = e.layer;
-  layer.waterOn = false;
-  drawnItems.addLayer(layer);
-
-  if (layer instanceof L.Polygon) {
-    const area = calculateArea(layer);
-    layer.cost = area * COST_PER_AREA;
-    layer.bindPopup(`Area: ${area.toFixed(2)} m²<br>Cost: RM ${layer.cost.toFixed(2)}`);
-    layer.on("click", () => updateTotal());
-  } else if (layer instanceof L.Circle) {
-    layer.on("click", () => toggleWater(layer));
-    updateLayer(layer);
-  }
-});
-
-// ===== DATE CHANGE EVENT =====
-datePicker.addEventListener("change", () => {
-  removeAllWaterLabels();
-  loadDateData();
-});
-
-// ===== SAVE DATA =====
+// ===== SAVE CURRENT DATE DATA =====
 document.getElementById("saveBtn").onclick = () => {
   const dateKey = datePicker.value;
   const data = [];
+
   drawnItems.eachLayer(layer => {
     data.push({
       type: layer instanceof L.Circle ? "circle" : "polygon",
@@ -169,14 +144,19 @@ document.getElementById("saveBtn").onclick = () => {
       waterOn: layer.waterOn
     });
   });
+
   localStorage.setItem("palmOilData_" + dateKey, JSON.stringify(data));
   alert("Data saved for " + dateKey);
 };
 
 // ===== LOAD DATA =====
 function loadDateData() {
+  // Remove old layers and water labels
+  drawnItems.eachLayer(layer => {
+    if (layer._waterLabel) map.removeLayer(layer._waterLabel);
+  });
   drawnItems.clearLayers();
-  removeAllWaterLabels();
+
   const dateKey = datePicker.value;
   const savedData = JSON.parse(localStorage.getItem("palmOilData_" + dateKey) || "[]");
 
@@ -189,18 +169,18 @@ function loadDateData() {
     }
     layer.waterOn = d.waterOn;
     drawnItems.addLayer(layer);
-    layer.on("click", () => {
-      if (layer instanceof L.Circle) toggleWater(layer);
-      else updateTotal();
-    });
+
+    if (layer instanceof L.Circle) layer.on("click", () => toggleWater(layer));
+    if (layer instanceof L.Polygon) layer.on("click", () => updateTotal(false));
+
     await updateLayer(layer);
   });
 }
 
 // ===== CLEAR ALL =====
 document.getElementById("clearBtn").onclick = () => {
+  drawnItems.eachLayer(layer => { if (layer._waterLabel) map.removeLayer(layer._waterLabel); });
   drawnItems.clearLayers();
-  removeAllWaterLabels();
   updateTotal(false);
 };
 
@@ -219,13 +199,14 @@ document.getElementById("generatePDF").onclick = async () => {
   let anyIrrigation = false;
 
   drawnItems.eachLayer(layer => {
-    if (layer instanceof L.Polygon && layer.cost) {
+    if (layer instanceof L.Polygon) {
       anyIrrigation = true;
-      doc.text(
-        `Polygon: Area ${layer.area} m² | Cost RM ${layer.cost}`,
-        10,
-        y
-      );
+      doc.text(`Polygon: Area ${layer.area} m² | Cost RM ${layer.cost}`, 10, y);
+      y += 10;
+    } else if (layer instanceof L.Circle) {
+      const status = layer.waterOn ? "Water ON" : "No Water Usage";
+      const note = layer.raining ? "🌧️ Raining – Watering disabled" : status;
+      doc.text(`Circle at (${layer.getLatLng().lat.toFixed(5)}, ${layer.getLatLng().lng.toFixed(5)}): ${note}`, 10, y);
       y += 10;
     }
   });
@@ -236,19 +217,13 @@ document.getElementById("generatePDF").onclick = async () => {
   }
 
   doc.text(`Total Cost: RM ${totalCost.toFixed(2)}`, 10, y + 10);
-  doc.text(`Status: ${anyIrrigation ? "Water Used" : "No Water Usage"}`, 10, y + 20);
 
-  // Save PDF
   const filename = `PalmOil_Receipt_${datePicker.value}.pdf`;
   doc.save(filename);
 
-  // WhatsApp message text
-  const msg = `Palm Oil Irrigation Receipt\nAdmin: ${user.firstname}\nDate: ${datePicker.value}\nTotal Cost: RM ${totalCost.toFixed(2)}\nStatus: ${anyIrrigation ? "Water Used" : "No Water Usage"}`;
-
-  // Open WhatsApp with pre-filled message
+  const msg = `Palm Oil Irrigation Receipt\nAdmin: ${user.firstname}\nDate: ${datePicker.value}\nTotal Cost: RM ${totalCost.toFixed(2)}`;
   window.open(`https://wa.me/60174909836?text=${encodeURIComponent(msg)}`, "_blank");
 };
 
 // ===== INITIAL LOAD =====
-removeAllWaterLabels();
 loadDateData();
