@@ -8,18 +8,19 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet-draw/dist/leaflet.draw.css">
 <link rel="stylesheet" href="css/home.css">
 </head>
-
 <body>
 
 <header>
-  <h3>Welcome, <span id="adminName"></span></h3>
+  <h2>Welcome, <span id="adminName"></span></h2>
   <button id="logoutBtn">Logout</button>
 </header>
 
 <div class="controls">
-  <label>Date:</label>
+  <label>Select Date:</label>
   <input type="date" id="datePicker">
-  <button id="saveDay">Save</button>
+  <button id="saveData">Save</button>
+  <button id="clearAll">Clear All</button>
+  <button id="generatePDF">Generate PDF Receipt</button>
 </div>
 
 <div id="map"></div>
@@ -30,6 +31,7 @@
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet-draw/dist/leaflet.draw.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="js/home.js"></script>
 
 </body>
