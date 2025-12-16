@@ -19,18 +19,15 @@
 </header>
 
 <div class="controls">
-  <div class="control-row">
-    <label>Select Date:</label>
-    <input type="date" id="datePicker">
-    <button id="saveBtn">Save</button>
-    <button id="clearBtn">Clear All</button>
-    <button id="generatePDF">Export PDF & WhatsApp</button>
-  </div>
+  <label>Select Date:</label>
+  <input type="date" id="datePicker">
+  <button id="saveBtn">Save</button>
+  <button id="clearBtn">Clear All</button>
+  <button id="generatePDF">Generate PDF & WhatsApp</button>
+</div>
 
-  <!-- TOTAL COST BELOW CONTROLS -->
-  <div class="summary">
-    Total Cost: RM <span id="totalCost">0.00</span>
-  </div>
+<div id="totalWrapper">
+  <h3>Total Cost: RM <span id="totalCost">0.00</span></h3>
 </div>
 
 <div id="map"></div>
