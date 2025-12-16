@@ -67,13 +67,13 @@ async function updateLayer(layer) {
   const raining = await isRaining(center.lat, center.lng, datePicker.value);
 
   if (raining) {
-    layer.setStyle?.({ color: "blue" });
+    if (layer.setStyle) layer.setStyle({ color: "blue" });
     layer.waterOn = false;
     layer.bindPopup("🌧️ Raining – Watering disabled");
     if (layer._waterLabel) map.removeLayer(layer._waterLabel);
   } else {
     if (layer instanceof L.Polygon) {
-      layer.setStyle?.({ color: "green" });
+      layer.setStyle({ color: layer.waterOn ? "darkgreen" : "green" });
       const area = calculateArea(layer).toFixed(2);
       const cost = (area * COST_PER_AREA).toFixed(2);
       layer.area = area;
@@ -82,17 +82,17 @@ async function updateLayer(layer) {
         ☀️ No rain<br>
         Area: ${area} m²<br>
         Cost: RM ${cost}<br>
+        <b>Click polygon to toggle Water ON/OFF</b>
       `);
     } else if (layer instanceof L.Circle) {
-      layer.setStyle?.({ color: layer.waterOn ? "darkgreen" : "green" });
+      layer.setStyle({ color: layer.waterOn ? "darkgreen" : "green" });
       if (layer.waterOn) {
-        // Remove previous label if exists
         if (layer._waterLabel) map.removeLayer(layer._waterLabel);
         const icon = L.divIcon({
           className: "water-label",
           html: `💧 Water ON`,
-          iconSize: [60, 20],
-          iconAnchor: [30, -10]
+          iconSize: [70, 20],
+          iconAnchor: [35, -10]
         });
         layer._waterLabel = L.marker(layer.getLatLng(), { icon, interactive: false }).addTo(map);
       } else if (layer._waterLabel) {
@@ -106,7 +106,7 @@ async function updateLayer(layer) {
 
 // ===== TOGGLE WATER (Circle Only) =====
 function toggleWater(layer) {
-  if (!(layer instanceof L.Circle)) return; // Only circles toggle water
+  if (!(layer instanceof L.Circle)) return;
   layer.waterOn = !layer.waterOn;
   updateLayer(layer);
 }
@@ -114,23 +114,29 @@ function toggleWater(layer) {
 // ===== DRAW EVENT =====
 map.on(L.Draw.Event.CREATED, async function(e) {
   const layer = e.layer;
-  layer.waterOn = false;
+  layer.waterOn = layer instanceof L.Circle; // Circles default Water ON
   drawnItems.addLayer(layer);
   await updateLayer(layer);
 
-  layer.on("click", () => toggleWater(layer));
+  // Click to toggle
+  layer.on("click", () => {
+    if (layer instanceof L.Polygon) layer.waterOn = !layer.waterOn;
+    if (layer instanceof L.Circle) toggleWater(layer);
+    updateLayer(layer);
+  });
 });
 
 // ===== DATE CHANGE EVENT =====
 datePicker.addEventListener("change", () => {
-  loadDateData();
+  drawnItems.clearLayers();
+  updateTotal();
 });
 
 // ===== TOTAL COST =====
 function updateTotal() {
   totalCost = 0;
   drawnItems.eachLayer(layer => {
-    if (layer instanceof L.Polygon && layer.cost) totalCost += parseFloat(layer.cost);
+    if (layer instanceof L.Polygon && layer.waterOn && layer.cost) totalCost += parseFloat(layer.cost);
   });
   document.getElementById("totalCost").textContent = totalCost.toFixed(2);
 }
@@ -151,27 +157,11 @@ document.getElementById("saveBtn").onclick = () => {
 
   localStorage.setItem("palmOilData_" + dateKey, JSON.stringify(data));
   alert("Data saved for " + dateKey);
-};
 
-// ===== LOAD DATA FOR SELECTED DATE =====
-function loadDateData() {
+  // Clear map for new date automatically
   drawnItems.clearLayers();
-  const dateKey = datePicker.value;
-  const savedData = JSON.parse(localStorage.getItem("palmOilData_" + dateKey) || "[]");
-
-  savedData.forEach(async d => {
-    let layer;
-    if (d.type === "circle") {
-      layer = L.circle([d.latlngs[0], d.latlngs[1]], { radius: d.radius });
-    } else if (d.type === "polygon") {
-      layer = L.polygon(d.latlngs.map(p => ({ lat: p[0], lng: p[1] })));
-    }
-    layer.waterOn = d.waterOn;
-    drawnItems.addLayer(layer);
-    layer.on("click", () => toggleWater(layer));
-    await updateLayer(layer);
-  });
-}
+  updateTotal();
+};
 
 // ===== GENERATE PDF & WHATSAPP =====
 document.getElementById("generatePDF").onclick = async () => {
@@ -186,7 +176,7 @@ document.getElementById("generatePDF").onclick = async () => {
 
   let y = 50;
   drawnItems.eachLayer(layer => {
-    if (layer instanceof L.Polygon && layer.cost) {
+    if (layer instanceof L.Polygon && layer.waterOn) {
       doc.text(`Polygon: Area ${layer.area} m² | Cost RM ${layer.cost}`, 10, y);
       y += 10;
     }
