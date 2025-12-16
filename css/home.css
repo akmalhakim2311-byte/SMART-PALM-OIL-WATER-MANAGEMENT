@@ -1,18 +1,21 @@
-body {
-  font-family: Arial, sans-serif;
+/* ===== GLOBAL ===== */
+html, body {
+  height: 100%;
   margin: 0;
-  padding: 0;
+  font-family: Arial, sans-serif;
   background: #f4f4f4;
+  overflow: hidden; /* 🚫 NO SCROLL */
 }
 
 /* ===== HEADER ===== */
 header {
+  height: 50px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   background: #2d6a4f;
   color: #fff;
-  padding: 10px 20px;
+  padding: 0 20px;
 }
 
 header h2 {
@@ -35,8 +38,8 @@ header button:hover {
 
 /* ===== CONTROLS ===== */
 .controls {
-  padding: 10px 20px;
   background: #e5e5e5;
+  padding: 8px 20px;
 }
 
 .control-row {
@@ -58,8 +61,8 @@ header button:hover {
 
 /* ===== TOTAL COST ===== */
 .summary {
-  margin-top: 8px;
-  padding: 8px 12px;
+  margin-top: 6px;
+  padding: 6px 12px;
   background: #d8f3dc;
   font-weight: bold;
   font-size: 16px;
@@ -68,10 +71,10 @@ header button:hover {
   width: fit-content;
 }
 
-/* ===== MAP ===== */
+/* ===== MAP (AUTO FIT SCREEN) ===== */
 #map {
+  height: calc(100vh - 50px - 90px); 
+  /* 100vh - header - controls */
   width: 100%;
-  height: 600px;
-  margin-top: 10px;
-  border: 2px solid #2d6a4f;
+  border-top: 2px solid #2d6a4f;
 }
