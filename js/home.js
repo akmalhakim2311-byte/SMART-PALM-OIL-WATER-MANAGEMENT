@@ -37,25 +37,20 @@ const COST_PER_AREA = 0.05;
 let totalCost = 0;
 let waterConfirmed = false;
 
-// ===== WEATHER =====
+// ===== WEATHER CHECK (OpenWeatherMap) =====
 const WEATHER_API_KEY = "adb0eb54d909230353f3589a97c08521";
 
+// Check if polygon will rain on selected date
 async function isRaining(lat, lng, date) {
-  try {
-    const res = await fetch(
-      `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lng}&appid=${WEATHER_API_KEY}`
-    );
-    const data = await res.json();
-    const selectedDate = new Date(date).toDateString();
-    return data.list.some(i =>
-      new Date(i.dt_txt).toDateString() === selectedDate &&
-      i.weather[0].main.toLowerCase().includes("rain")
-    );
-  } catch {
-    return false;
-  }
+  const url = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lng}&appid=${WEATHER_API_KEY}`;
+  const res = await fetch(url);
+  const data = await res.json();
+  const selectedDate = new Date(date).toDateString();
+  return data.list.some(item =>
+    new Date(item.dt_txt).toDateString() === selectedDate &&
+    item.weather[0].main.toLowerCase().includes("rain")
+  );
 }
-
 // ===== AREA =====
 function polygonArea(layer) {
   return L.GeometryUtil.geodesicArea(layer.getLatLngs()[0]);
