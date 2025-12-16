@@ -55,12 +55,10 @@ async function isRaining(lat, lng, date) {
 
 // ===== AREA CALCULATION =====
 function calculateArea(layer) {
-  if (layer instanceof L.Circle) {
-    return Math.PI * Math.pow(layer.getRadius(), 2);
-  } else if (layer instanceof L.Polygon) {
+  if (layer instanceof L.Polygon) {
     return L.GeometryUtil.geodesicArea(layer.getLatLngs()[0]);
   }
-  return 0;
+  return 0; // Circles do not contribute to cost
 }
 
 // ===== UPDATE LAYER =====
@@ -74,46 +72,41 @@ async function updateLayer(layer) {
     layer.bindPopup("🌧️ Raining – Watering disabled");
     if (layer._waterLabel) map.removeLayer(layer._waterLabel);
   } else {
-    layer.setStyle?.({ color: layer.waterOn ? "darkgreen" : "green" });
-    const area = calculateArea(layer).toFixed(2);
-    const cost = (area * COST_PER_AREA).toFixed(2);
-    layer.area = area;
-    layer.cost = cost;
-
-    layer.bindPopup(`
-      ☀️ No rain<br>
-      Area: ${area} m²<br>
-      Cost: RM ${cost}<br>
-      <b>Click to toggle Water ON/OFF</b>
-    `);
-
-    // Water ON label for circle
-    if (layer instanceof L.Circle) {
+    if (layer instanceof L.Polygon) {
+      layer.setStyle?.({ color: "green" });
+      const area = calculateArea(layer).toFixed(2);
+      const cost = (area * COST_PER_AREA).toFixed(2);
+      layer.area = area;
+      layer.cost = cost;
+      layer.bindPopup(`
+        ☀️ No rain<br>
+        Area: ${area} m²<br>
+        Cost: RM ${cost}<br>
+      `);
+    } else if (layer instanceof L.Circle) {
+      layer.setStyle?.({ color: layer.waterOn ? "darkgreen" : "green" });
       if (layer.waterOn) {
-        // Remove existing label first
+        // Remove previous label if exists
         if (layer._waterLabel) map.removeLayer(layer._waterLabel);
-
         const icon = L.divIcon({
           className: "water-label",
-          html: `💧 Water ON<br>RM ${cost}`,
-          iconSize: [80, 40],
-          iconAnchor: [40, -10],
+          html: `💧 Water ON`,
+          iconSize: [60, 20],
+          iconAnchor: [30, -10]
         });
         layer._waterLabel = L.marker(layer.getLatLng(), { icon, interactive: false }).addTo(map);
-      } else {
-        if (layer._waterLabel) {
-          map.removeLayer(layer._waterLabel);
-          layer._waterLabel = null;
-        }
+      } else if (layer._waterLabel) {
+        map.removeLayer(layer._waterLabel);
+        layer._waterLabel = null;
       }
     }
   }
   updateTotal();
 }
 
-// ===== TOGGLE WATER =====
+// ===== TOGGLE WATER (Circle Only) =====
 function toggleWater(layer) {
-  if (layer.waterOn === undefined) layer.waterOn = false;
+  if (!(layer instanceof L.Circle)) return; // Only circles toggle water
   layer.waterOn = !layer.waterOn;
   updateLayer(layer);
 }
@@ -137,7 +130,7 @@ datePicker.addEventListener("change", () => {
 function updateTotal() {
   totalCost = 0;
   drawnItems.eachLayer(layer => {
-    if (layer.waterOn && layer.cost) totalCost += parseFloat(layer.cost);
+    if (layer instanceof L.Polygon && layer.cost) totalCost += parseFloat(layer.cost);
   });
   document.getElementById("totalCost").textContent = totalCost.toFixed(2);
 }
@@ -180,14 +173,28 @@ function loadDateData() {
   });
 }
 
-// ===== CLEAR ALL =====
-document.getElementById("clearBtn").onclick = () => {
-  drawnItems.eachLayer(layer => {
-    if (layer._waterLabel) map.removeLayer(layer._waterLabel);
-  });
-  drawnItems.clearLayers();
-  updateTotal();
-};
+// ===== BIN ICON TO CLEAR ALL =====
+const clearIcon = L.Control.extend({
+  options: { position: 'topleft' },
+  onAdd: function() {
+    const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
+    container.style.backgroundColor = 'white';
+    container.style.width = '30px';
+    container.style.height = '30px';
+    container.style.cursor = 'pointer';
+    container.title = 'Clear All';
+    container.innerHTML = '🗑️';
+    container.onclick = () => {
+      drawnItems.eachLayer(layer => {
+        if (layer._waterLabel) map.removeLayer(layer._waterLabel);
+      });
+      drawnItems.clearLayers();
+      updateTotal();
+    };
+    return container;
+  }
+});
+map.addControl(new clearIcon());
 
 // ===== GENERATE PDF & WHATSAPP =====
 document.getElementById("generatePDF").onclick = async () => {
@@ -202,8 +209,8 @@ document.getElementById("generatePDF").onclick = async () => {
 
   let y = 50;
   drawnItems.eachLayer(layer => {
-    if (layer.waterOn) {
-      doc.text(`Layer: Area ${layer.area} m² | Cost RM ${layer.cost}`, 10, y);
+    if (layer instanceof L.Polygon && layer.cost) {
+      doc.text(`Polygon: Area ${layer.area} m² | Cost RM ${layer.cost}`, 10, y);
       y += 10;
     }
   });
