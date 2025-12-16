@@ -65,7 +65,7 @@ function calculateArea(layer) {
   }
 }
 
-// ===== UPDATE POLYGON/CIRCLE =====
+// ===== UPDATE LAYER =====
 async function updateLayer(layer) {
   const center = layer.getBounds ? layer.getBounds().getCenter() : layer.getLatLng();
   const raining = await isRaining(center.lat, center.lng, datePicker.value);
@@ -75,20 +75,29 @@ async function updateLayer(layer) {
     layer.waterOn = false;
     layer.bindPopup("🌧️ Raining today – Watering disabled");
   } else {
-    layer.setStyle({ color: layer.waterOn ? "darkgreen" : "green" });
-    const area = calculateArea(layer);
-    const cost = (area * COST_PER_AREA).toFixed(2);
-    layer.cost = cost;
-    layer.bindPopup(layer.waterOn ?
-      `☀️ No rain<br>Area: ${area.toFixed(2)} m²<br>Cost: RM ${cost}<br><b>Water ON</b>` :
-      `☀️ No rain<br>Area: ${area.toFixed(2)} m²<br>Cost: RM ${cost}<br><b>Click to toggle Water ON/OFF</b>`
-    );
+    if (layer instanceof L.Circle) {
+      layer.setStyle({ color: layer.waterOn ? "darkgreen" : "green" });
+      const area = calculateArea(layer);
+      const cost = (area * COST_PER_AREA).toFixed(2);
+      layer.cost = cost;
+      layer.bindPopup(layer.waterOn ?
+        `☀️ No rain<br>Area: ${area.toFixed(2)} m²<br>Cost: RM ${cost}<br><b>Water ON</b>` :
+        `☀️ No rain<br>Area: ${area.toFixed(2)} m²<br>Cost: RM ${cost}<br><b>Click to toggle Water ON/OFF</b>`
+      );
+    } else {
+      layer.setStyle({ color: "green" });
+      const area = calculateArea(layer);
+      const cost = (area * COST_PER_AREA).toFixed(2);
+      layer.cost = cost;
+      layer.bindPopup(`Polygon Area: ${area.toFixed(2)} m²<br>Cost: RM ${cost}`);
+    }
   }
   updateTotal();
 }
 
-// ===== TOGGLE WATER =====
+// ===== TOGGLE WATER (for circles only) =====
 function toggleWater(layer) {
+  if (!(layer instanceof L.Circle)) return; // Only circles toggle
   if (layer.waterOn === undefined) layer.waterOn = false;
   layer.waterOn = !layer.waterOn;
   updateLayer(layer);
@@ -147,13 +156,12 @@ document.getElementById("generatePDF").onclick = async () => {
   drawnItems.eachLayer(layer => {
     if (layer.waterOn) {
       const area = calculateArea(layer).toFixed(2);
-      doc.text(`Polygon/Circle: Area ${area} m² | Cost RM ${layer.cost}`, 10, y);
+      doc.text(`Circle: Area ${area} m² | Cost RM ${layer.cost}`, 10, y);
       y += 10;
     }
   });
 
   doc.text(`Total Cost: RM ${totalCost.toFixed(2)}`, 10, y + 10);
-
   doc.save("receipt.pdf");
 
   const msg = encodeURIComponent(`Palm Oil Irrigation Receipt\nAdmin: ${user.firstname}\nDate: ${datePicker.value}\nTotal Cost: RM ${totalCost.toFixed(2)}`);
