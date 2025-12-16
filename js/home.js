@@ -173,29 +173,6 @@ function loadDateData() {
   });
 }
 
-// ===== BIN ICON TO CLEAR ALL =====
-const clearIcon = L.Control.extend({
-  options: { position: 'topleft' },
-  onAdd: function() {
-    const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
-    container.style.backgroundColor = 'white';
-    container.style.width = '30px';
-    container.style.height = '30px';
-    container.style.cursor = 'pointer';
-    container.title = 'Clear All';
-    container.innerHTML = '🗑️';
-    container.onclick = () => {
-      drawnItems.eachLayer(layer => {
-        if (layer._waterLabel) map.removeLayer(layer._waterLabel);
-      });
-      drawnItems.clearLayers();
-      updateTotal();
-    };
-    return container;
-  }
-});
-map.addControl(new clearIcon());
-
 // ===== GENERATE PDF & WHATSAPP =====
 document.getElementById("generatePDF").onclick = async () => {
   const { jsPDF } = window.jspdf;
