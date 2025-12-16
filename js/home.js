@@ -39,6 +39,21 @@ map.addControl(drawControl);
 const COST_PER_AREA = 0.05;
 let totalCost = 0;
 
+// ===== WATER ON LABEL =====
+let waterOnLabel = document.createElement("div");
+waterOnLabel.id = "waterOnLabel";
+waterOnLabel.style.position = "absolute";
+waterOnLabel.style.top = "10px";
+waterOnLabel.style.right = "20px";
+waterOnLabel.style.padding = "5px 10px";
+waterOnLabel.style.background = "rgba(45,106,79,0.9)";
+waterOnLabel.style.color = "#fff";
+waterOnLabel.style.fontWeight = "bold";
+waterOnLabel.style.borderRadius = "4px";
+waterOnLabel.style.zIndex = 1000;
+waterOnLabel.style.display = "none"; // hidden by default
+document.getElementById("map").appendChild(waterOnLabel);
+
 // ===== WEATHER CHECK =====
 const WEATHER_API_KEY = "adb0eb54d909230353f3589a97c08521";
 async function isRaining(lat, lng, date) {
@@ -65,13 +80,14 @@ function calculateArea(layer) {
 
 // ===== UPDATE LAYER =====
 async function updateLayer(layer) {
-  const center = layer.getBounds().getCenter();
+  const center = layer.getBounds ? layer.getBounds().getCenter() : layer.getLatLng();
   const raining = await isRaining(center.lat, center.lng, datePicker.value);
 
   if (raining) {
     layer.setStyle?.({ color: "blue" });
     layer.waterOn = false;
     layer.bindPopup("🌧️ Raining – Watering disabled");
+    if (layer instanceof L.Circle) waterOnLabel.style.display = "none";
   } else {
     layer.setStyle?.({ color: layer.waterOn ? "darkgreen" : "green" });
     const area = calculateArea(layer).toFixed(2);
@@ -84,6 +100,12 @@ async function updateLayer(layer) {
       Cost: RM ${cost}<br>
       <b>Click to toggle Water ON/OFF</b>
     `);
+    
+    // Show Water ON label for circle markers
+    if (layer instanceof L.Circle && layer.waterOn) {
+      waterOnLabel.style.display = "block";
+      waterOnLabel.innerHTML = `💧 Water ON | Total Cost: RM ${totalCost.toFixed(2)}`;
+    }
   }
   updateTotal();
 }
@@ -92,7 +114,21 @@ async function updateLayer(layer) {
 function toggleWater(layer) {
   if (layer.waterOn === undefined) layer.waterOn = false;
   layer.waterOn = !layer.waterOn;
+
   updateLayer(layer);
+  updateWaterLabel();
+}
+
+// ===== UPDATE WATER LABEL =====
+function updateWaterLabel() {
+  // Show total cost only if at least one circle is waterOn
+  const anyCircleOn = Array.from(drawnItems.getLayers()).some(l => l instanceof L.Circle && l.waterOn);
+  if (anyCircleOn) {
+    waterOnLabel.style.display = "block";
+    waterOnLabel.innerHTML = `💧 Water ON | Total Cost: RM ${totalCost.toFixed(2)}`;
+  } else {
+    waterOnLabel.style.display = "none";
+  }
 }
 
 // ===== DRAW EVENT =====
@@ -102,7 +138,6 @@ map.on(L.Draw.Event.CREATED, async function(e) {
   drawnItems.addLayer(layer);
   await updateLayer(layer);
 
-  // Only click to toggle water
   layer.on("click", () => toggleWater(layer));
 });
 
@@ -118,6 +153,7 @@ function updateTotal() {
     if (layer.waterOn && layer.cost) totalCost += parseFloat(layer.cost);
   });
   document.getElementById("totalCost").textContent = totalCost.toFixed(2);
+  updateWaterLabel();
 }
 
 // ===== SAVE CURRENT DATE DATA =====
@@ -129,7 +165,7 @@ document.getElementById("saveBtn").onclick = () => {
     data.push({
       type: layer instanceof L.Circle ? "circle" : "polygon",
       latlngs: layer instanceof L.Circle ? [layer.getLatLng().lat, layer.getLatLng().lng] : layer.getLatLngs()[0].map(p => [p.lat, p.lng]),
-      radius: layer instanceof L.Circle ? layer.getRadius() : null,
+      radius: layer.getRadius ? layer.getRadius() : null,
       waterOn: layer.waterOn
     });
   });
@@ -153,10 +189,7 @@ function loadDateData() {
     }
     layer.waterOn = d.waterOn;
     drawnItems.addLayer(layer);
-
-    // Toggle water on click
     layer.on("click", () => toggleWater(layer));
-
     await updateLayer(layer);
   });
 }
@@ -164,7 +197,9 @@ function loadDateData() {
 // ===== CLEAR ALL =====
 document.getElementById("clearBtn").onclick = () => {
   drawnItems.clearLayers();
-  updateTotal();
+  totalCost = 0;
+  document.getElementById("totalCost").textContent = totalCost.toFixed(2);
+  waterOnLabel.style.display = "none";
 };
 
 // ===== GENERATE PDF & WHATSAPP =====
@@ -195,4 +230,3 @@ document.getElementById("generatePDF").onclick = async () => {
 
 // ===== INITIAL LOAD =====
 loadDateData();
-
