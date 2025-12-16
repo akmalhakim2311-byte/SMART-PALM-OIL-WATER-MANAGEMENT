@@ -7,7 +7,6 @@
 <!-- Leaflet CSS -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
 <link rel="stylesheet" href="https://unpkg.com/leaflet-draw/dist/leaflet.draw.css">
-
 <!-- Custom CSS -->
 <link rel="stylesheet" href="css/home.css">
 </head>
@@ -21,25 +20,23 @@
 <div class="controls">
   <label for="datePicker">Select Date:</label>
   <input type="date" id="datePicker">
+
   <button id="saveBtn">Save</button>
   <button id="generatePDF">Export PDF + WhatsApp</button>
+
+  <div class="total-cost">
+    Total Cost: RM <span id="totalCost">0.00</span>
+  </div>
 </div>
 
 <div id="map"></div>
 
-<div class="summary">
-  <h3>Total Cost: RM <span id="totalCost">0.00</span></h3>
-</div>
-
-<!-- Leaflet JS -->
+<!-- Scripts -->
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet-draw/dist/leaflet.draw.js"></script>
-
-<!-- jsPDF for PDF export -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-
-<!-- Home JS -->
 <script src="js/home.js"></script>
 
 </body>
 </html>
+
