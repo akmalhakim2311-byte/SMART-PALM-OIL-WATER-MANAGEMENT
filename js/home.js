@@ -37,6 +37,31 @@ map.addControl(new L.Control.Draw({
 const COST_PER_AREA = 0.05;
 let totalCost = 0;
 
+// ===== WEATHER CHECK =====
+const WEATHER_API_KEY = "adb0eb54d909230353f3589a97c08521";
+async function isRaining(lat, lng, date) {
+  try {
+    const res = await fetch(`https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lng}&appid=${WEATHER_API_KEY}`);
+    const data = await res.json();
+    const selectedDate = new Date(date).toDateString();
+    return data.list.some(i =>
+      new Date(i.dt_txt).toDateString() === selectedDate &&
+      i.weather[0].main.toLowerCase().includes("rain")
+    );
+  } catch (e) {
+    console.error("Weather API error", e);
+    return false;
+  }
+}
+
+// ===== AREA CALCULATION =====
+function calculateArea(layer) {
+  if (layer instanceof L.Polygon) {
+    return L.GeometryUtil.geodesicArea(layer.getLatLngs()[0]);
+  }
+  return 0; // Circles do not contribute to cost
+}
+
 // ===== WATER LABEL =====
 function removeWaterLabel(layer) {
   if (layer._waterLabel) {
@@ -113,6 +138,11 @@ map.on(L.Draw.Event.CREATED, e => {
   }
 
   updateLayer(layer);
+});
+
+// ===== DATE CHANGE =====
+datePicker.addEventListener("change", () => {
+  loadDateData();
 });
 
 // ===== TOTAL =====
