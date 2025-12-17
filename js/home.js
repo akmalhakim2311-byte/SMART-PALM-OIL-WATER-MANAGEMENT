@@ -81,11 +81,6 @@ function showWaterLabel(circle) {
   }).addTo(map);
 }
 
-// ===== RAIN CHECK (SIMPLIFIED FLAG) =====
-function isRaining() {
-  return false; // replace with real API later
-}
-
 // ===== AREA =====
 function calcArea(layer) {
   return layer instanceof L.Polygon
