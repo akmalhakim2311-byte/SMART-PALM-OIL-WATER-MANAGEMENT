@@ -245,7 +245,6 @@ document.getElementById("generatePDF").onclick = () => {
 
 // ===== TABLE CONTENT =====
 let zoneIndex = 1;
-let y = 75;
 
 let currentPolygon = null;
 
