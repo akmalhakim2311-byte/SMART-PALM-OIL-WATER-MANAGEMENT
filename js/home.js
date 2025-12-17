@@ -203,6 +203,7 @@ document.getElementById("clearBtn").onclick = () => {
   updateTotal(false);
 };
 
+// ===== HELPER FUNCTION =====
 function isCircleInsidePolygon(circle, polygon) {
   return leafletPip.pointInLayer(circle.getLatLng(), polygon).length > 0;
 }
