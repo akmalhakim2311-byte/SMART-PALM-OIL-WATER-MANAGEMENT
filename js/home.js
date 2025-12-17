@@ -30,7 +30,8 @@ map.addControl(new L.Control.Draw({
     circlemarker: false
   },
   edit: { featureGroup: drawnItems }
-}));
+});
+map.addControl(drawControl););
 
 // ===== COST SETTINGS =====
 const COST_PER_AREA = 0.05;
