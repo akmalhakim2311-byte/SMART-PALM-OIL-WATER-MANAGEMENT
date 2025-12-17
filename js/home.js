@@ -204,9 +204,6 @@ document.getElementById("clearBtn").onclick = () => {
 };
 
 // ===== GENERATE PDF & WHATSAPP =====
-function isCircleInsidePolygon(circle, polygon) {
-  return leafletPip.pointInLayer(circle.getLatLng(), polygon).length > 0;
-}
 document.getElementById("generatePDF").onclick = () => {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF();
