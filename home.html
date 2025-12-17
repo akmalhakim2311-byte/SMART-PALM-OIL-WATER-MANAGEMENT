@@ -4,11 +4,10 @@
 <meta charset="UTF-8">
 <title>Palm Oil Irrigation Dashboard</title>
 
-<!-- Leaflet CSS -->
+<!-- Leaflet -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
 <link rel="stylesheet" href="https://unpkg.com/leaflet-draw/dist/leaflet.draw.css">
 
-<!-- Custom CSS -->
 <link rel="stylesheet" href="css/home.css">
 </head>
 <body>
@@ -19,27 +18,24 @@
 </header>
 
 <div class="controls">
-  <label>Select Date:</label>
+  <label>Date:</label>
   <input type="date" id="datePicker">
   <button id="saveBtn">Save</button>
   <button id="clearBtn">Clear All</button>
   <button id="generatePDF">Generate PDF & WhatsApp</button>
 </div>
 
-<div id="totalWrapper">
-  <h3>Total Cost: RM <span id="totalCost">0.00</span></h3>
-</div>
-
 <div id="map"></div>
 
-<!-- Leaflet JS -->
+<div class="summary">
+  Total Cost: RM <span id="totalCost">0.00</span>
+</div>
+
+<!-- JS -->
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet-draw/dist/leaflet.draw.js"></script>
-
-<!-- jsPDF -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
-<!-- Custom JS -->
 <script src="js/home.js"></script>
 </body>
 </html>
