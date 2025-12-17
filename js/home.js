@@ -254,7 +254,7 @@ document.getElementById("generatePDF").onclick = () => {
       doc.text(cost, 170, y);
 
       y += 8;
-    }
+    });
     
 let index = ↳;
   y += 10;
