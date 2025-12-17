@@ -22,8 +22,16 @@ L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
 // ===== DRAW CONTROLS =====
 const drawnItems = new L.FeatureGroup();
 map.addLayer(drawnItems);
+
 const drawControl = new L.Control.Draw({
-  draw: { polygon: true, circle: true, marker: false, polyline: false, rectangle: false: circlemarker: false },
+  draw: {
+    polygon: true,
+    circle: true,
+    marker: false,
+    polyline: false,
+    rectangle: false,
+    circlemarker: false
+  },
   edit: { featureGroup: drawnItems }
 });
 map.addControl(drawControl);
@@ -55,6 +63,16 @@ function calculateArea(layer) {
     return L.GeometryUtil.geodesicArea(layer.getLatLngs()[0]);
   }
   return 0; // Circles do not contribute to cost
+}
+
+// ===== REMOVE ALL WATER LABELS =====
+function removeAllWaterLabels() {
+  drawnItems.eachLayer(layer => {
+    if (layer._waterLabel) {
+      map.removeLayer(layer._waterLabel);
+      layer._waterLabel = null;
+    }
+  });
 }
 
 // ===== UPDATE LAYER =====
