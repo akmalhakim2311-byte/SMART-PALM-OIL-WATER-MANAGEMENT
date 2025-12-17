@@ -243,39 +243,43 @@ document.getElementById("generatePDF").onclick = () => {
     if (layer instanceof L.Circle) circles.push(layer);
   });
 
-  // ===== ZONE-BASED NUMBERING =====
-  let zoneIndex = 1;
+// ===== TABLE CONTENT =====
+let zoneIndex = 1;
+let y = 75;
 
-  polygons.forEach(polygon => {
-    const weather = polygon.raining ? "Raining" : "Clear";
-    const water = polygon.raining ? "Disabled" : "Active";
-    const cost = polygon.raining ? "0.00" : polygon.cost.toFixed(2);
+let currentPolygon = null;
 
-    // Polygon row
+drawnItems.eachLayer(layer => {
+  if (layer instanceof L.Polygon) {
+    currentPolygon = layer;
+
+    const weather = layer.raining ? "Raining" : "Clear";
+    const water = layer.raining ? "Disabled" : "Active";
+    const cost = layer.raining ? "0.00" : layer.cost.toFixed(2);
+
     doc.text(String(zoneIndex), 10, y);
     doc.text("Polygon Area", 25, y);
     doc.text(weather, 95, y);
     doc.text(water, 130, y);
     doc.text(cost, 170, y);
+
     y += 8;
-
-    // Related water points
-    circles.forEach(circle => {
-      if (leafletPip.pointInLayer(circle.getLatLng(), polygon).length > 0) {
-        const cWeather = circle.raining ? "Raining" : "Clear";
-        const cWater = circle.waterOn ? "Water ON" : "No Water";
-
-        doc.text("", 10, y);
-        doc.text("↳ Water Point", 25, y);
-        doc.text(cWeather, 95, y);
-        doc.text(cWater, 130, y);
-        doc.text("0.00", 170, y);
-        y += 8;
-      }
-    });
-
     zoneIndex++;
-  });
+  }
+
+  if (layer instanceof L.Circle && currentPolygon) {
+    const weather = layer.raining ? "Raining" : "Clear";
+    const water = layer.waterOn ? "Water ON" : "No Water";
+
+    doc.text("", 10, y);
+    doc.text("↳ Water Point", 25, y);
+    doc.text(weather, 95, y);
+    doc.text(water, 130, y);
+    doc.text("0.00", 170, y);
+
+    y += 8;
+  }
+});
 
   // ===== TOTAL =====
   doc.line(120, y + 5, 200, y + 5);
