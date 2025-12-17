@@ -19,8 +19,10 @@ L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
   attribution: "© OpenStreetMap"
 }).addTo(map);
 
-// ===== DRAW CONTROL (NO CIRCLEMARKER) =====
-map.addControl(new L.Control.Draw({
+// ===== DRAW CONTROLS =====
+const drawnItems = new L.FeatureGroup();
+map.addLayer(drawnItems);
+const drawControl = new L.Control.Draw({
   draw: {
     polygon: true,
     circle: true,
