@@ -196,13 +196,13 @@ function loadDateData() {
 }
 
 // ===== CLEAR ALL =====
-// ===== CLEAR =====
 document.getElementById("clearBtn").onclick = () => {
   removeAllWaterLabels();
   drawnItems.clearLayers();
   updateTotal(false);
 };
 
+// ===== GENERATE PDF & WHATSAPP =====
 document.getElementById("generatePDF").onclick = () => {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF();
@@ -228,9 +228,10 @@ document.getElementById("generatePDF").onclick = () => {
   let y = 65;
   doc.setFontSize(11);
   doc.text("No", 10, y);
-  doc.text("Zone", 25, y);
-  doc.text("Weather", 95, y);
-  doc.text("Water Usage", 130, y);
+  doc.text("Zone", 20, y);
+  doc.text("Area (m²)", 45, y);
+  doc.text("Weather", 85, y);
+  doc.text("Water Usage", 120, y);
   doc.text("Cost (RM)", 170, y);
   doc.line(10, y + 2, 200, y + 2);
 
@@ -246,26 +247,23 @@ document.getElementById("generatePDF").onclick = () => {
     }
   });
 
+  // ===== LINK WATER POINT TO ZONE =====
   drawnItems.eachLayer(layer => {
     if (layer instanceof L.Circle) {
       const center = layer.getLatLng();
-
-      // Attach circle to nearest polygon (zone)
       let nearestZone = null;
       let minDist = Infinity;
 
       zones.forEach(zone => {
         const polyCenter = zone.polygon.getBounds().getCenter();
-        const d = center.distanceTo(polyCenter);
-        if (d < minDist) {
-          minDist = d;
+        const dist = center.distanceTo(polyCenter);
+        if (dist < minDist) {
+          minDist = dist;
           nearestZone = zone;
         }
       });
 
-      if (nearestZone) {
-        nearestZone.waterPoint = layer;
-      }
+      if (nearestZone) nearestZone.waterPoint = layer;
     }
   });
 
@@ -277,6 +275,7 @@ document.getElementById("generatePDF").onclick = () => {
     const poly = zone.polygon;
     const waterPoint = zone.waterPoint;
 
+    const area = Number(poly.area || 0).toFixed(2);
     const raining = poly.raining === true;
     const weather = raining ? "Raining" : "Clear";
     const water = raining
@@ -290,9 +289,10 @@ document.getElementById("generatePDF").onclick = () => {
       : Number(poly.cost || 0).toFixed(2);
 
     doc.text(String(index), 10, y);
-    doc.text(`Zone ${index}`, 25, y);
-    doc.text(weather, 95, y);
-    doc.text(water, 130, y);
+    doc.text(`Zone ${index}`, 20, y);
+    doc.text(area, 45, y);
+    doc.text(weather, 85, y);
+    doc.text(water, 120, y);
     doc.text(cost, 170, y);
 
     index++;
@@ -302,7 +302,7 @@ document.getElementById("generatePDF").onclick = () => {
   // ===== TOTAL =====
   doc.line(120, y + 5, 200, y + 5);
   doc.setFontSize(12);
-  doc.text("TOTAL", 130, y + 12);
+  doc.text("TOTAL", 120, y + 12);
   doc.text(`RM ${Number(totalCost).toFixed(2)}`, 170, y + 12);
 
   // ===== FOOTER =====
