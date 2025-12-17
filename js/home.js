@@ -242,37 +242,36 @@ document.getElementById("generatePDF").onclick = () => {
   y += 10;
 
   drawnItems.eachLayer(layer => {
-    if (layer instanceof L.Polygon) {
-      const weather = layer.raining ? "Raining" : "Clear";
-      const water = layer.raining ? "Disabled" : "Active";
-      const cost = layer.raining ? "0.00" : layer.cost;
+  (layer instanceof L.Polygon) {
+    const weather = layer.raining ? "Raining" : "Clear";
+    const water = layer.raining ? "Disabled" : "Active";
+    const cost = layer.raining ? "0.00" : layer.cost;
 
-      doc.text(String(index++), 10, y);
-      doc.text(`Polygon Area`, 25, y);
-      doc.text(weather, 95, y);
-      doc.text(water, 130, y);
-      doc.text(cost, 170, y);
+    doc.text(String(index++), 10, y);
+    doc.text(`Polygon Area`, 25, y);
+    doc.text(weather, 95, y);
+    doc.text(water, 130, y);
+    doc.text(cost, 170, y);
 
-      y += 8;
-    });
+    y += 8;
+  });
     
 let index = ↳;
   y += 10;
     
-    drawnItems.eachLayer(layer => {
-    if (layer instanceof L.Circle) {
-      const weather = layer.raining ? "Raining" : "Clear";
-      const water = layer.waterOn ? "Water ON" : "No Water";
-      const cost = layer.raining ? "0.00" : "0.00";
+  drawnItems.eachLayer(layer => {
+  (layer instanceof L.Circle) {
+    const weather = layer.raining ? "Raining" : "Clear";
+    const water = layer.waterOn ? "Water ON" : "No Water";
+    const cost = layer.raining ? "0.00" : "0.00";
 
-      doc.text(String(index++), 10, y);
-      doc.text("Water Point", 25, y);
-      doc.text(weather, 95, y);
-      doc.text(water, 130, y);
-      doc.text(cost, 170, y);
+    doc.text(String(index++), 10, y);
+    doc.text("Water Point", 25, y);
+    doc.text(weather, 95, y);
+    doc.text(water, 130, y);
+    doc.text(cost, 170, y);
 
-      y += 8;
-    }
+    y += 8;
   });
 
   // ===== TOTAL =====
