@@ -203,7 +203,6 @@ document.getElementById("clearBtn").onclick = () => {
   updateTotal(false);
 };
 
-// ===== GENERATE PDF & WHATSAPP =====
 document.getElementById("generatePDF").onclick = () => {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF();
@@ -214,11 +213,12 @@ document.getElementById("generatePDF").onclick = () => {
   // ===== HEADER =====
   doc.setFontSize(18);
   doc.text("PALM OIL IRRIGATION INVOICE", 105, 20, { align: "center" });
+
   doc.setFontSize(10);
   doc.text("Smart Palm Oil Water Management System", 105, 26, { align: "center" });
   doc.line(10, 30, 200, 30);
 
-  // ===== INFO =====
+  // ===== INVOICE INFO =====
   doc.setFontSize(11);
   doc.text(`Invoice No: ${invoiceNo}`, 10, 40);
   doc.text(`Date: ${date}`, 10, 46);
@@ -226,65 +226,84 @@ document.getElementById("generatePDF").onclick = () => {
 
   // ===== TABLE HEADER =====
   let y = 65;
+  doc.setFontSize(11);
   doc.text("No", 10, y);
-  doc.text("Zone / Area", 25, y);
+  doc.text("Zone", 25, y);
   doc.text("Weather", 95, y);
   doc.text("Water Usage", 130, y);
   doc.text("Cost (RM)", 170, y);
   doc.line(10, y + 2, 200, y + 2);
-  y += 10;
 
-  // ===== COLLECT POLYGONS & CIRCLES =====
-  const polygons = [];
-  const circles = [];
+  // ===== COLLECT ZONES =====
+  const zones = [];
 
   drawnItems.eachLayer(layer => {
-    if (layer instanceof L.Polygon) polygons.push(layer);
-    if (layer instanceof L.Circle) circles.push(layer);
+    if (layer instanceof L.Polygon) {
+      zones.push({
+        polygon: layer,
+        waterPoint: null
+      });
+    }
   });
 
-// ===== TABLE CONTENT =====
-let zoneIndex = 1;
+  drawnItems.eachLayer(layer => {
+    if (layer instanceof L.Circle) {
+      const center = layer.getLatLng();
 
-let currentPolygon = null;
+      // Attach circle to nearest polygon (zone)
+      let nearestZone = null;
+      let minDist = Infinity;
 
-drawnItems.eachLayer(layer => {
-  if (layer instanceof L.Polygon) {
-    currentPolygon = layer;
+      zones.forEach(zone => {
+        const polyCenter = zone.polygon.getBounds().getCenter();
+        const d = center.distanceTo(polyCenter);
+        if (d < minDist) {
+          minDist = d;
+          nearestZone = zone;
+        }
+      });
 
-    const weather = layer.raining ? "Raining" : "Clear";
-    const water = layer.raining ? "Disabled" : "Active";
-    const cost = layer.raining ? "0.00" : layer.cost.toFixed(2);
+      if (nearestZone) {
+        nearestZone.waterPoint = layer;
+      }
+    }
+  });
 
-    doc.text(String(zoneIndex), 10, y);
-    doc.text("Polygon Area", 25, y);
+  // ===== TABLE CONTENT =====
+  let index = 1;
+  y += 10;
+
+  zones.forEach(zone => {
+    const poly = zone.polygon;
+    const waterPoint = zone.waterPoint;
+
+    const raining = poly.raining === true;
+    const weather = raining ? "Raining" : "Clear";
+    const water = raining
+      ? "Disabled"
+      : waterPoint && waterPoint.waterOn
+        ? "Water ON"
+        : "No Water";
+
+    const cost = raining
+      ? "0.00"
+      : Number(poly.cost || 0).toFixed(2);
+
+    doc.text(String(index), 10, y);
+    doc.text(`Zone ${index}`, 25, y);
     doc.text(weather, 95, y);
     doc.text(water, 130, y);
     doc.text(cost, 170, y);
 
+    index++;
     y += 8;
-    zoneIndex++;
-  }
-
-  if (layer instanceof L.Circle && currentPolygon) {
-    const weather = layer.raining ? "Raining" : "Clear";
-    const water = layer.waterOn ? "Water ON" : "No Water";
-
-    doc.text("", 10, y);
-    doc.text("↳ Water Point", 25, y);
-    doc.text(weather, 95, y);
-    doc.text(water, 130, y);
-    doc.text("0.00", 170, y);
-
-    y += 8;
-  }
-});
+  });
 
   // ===== TOTAL =====
   doc.line(120, y + 5, 200, y + 5);
   doc.setFontSize(12);
   doc.text("TOTAL", 130, y + 12);
-  doc.text(`RM ${totalCost.toFixed(2)}`, 170, y + 12);
+  doc.text(`RM ${Number(totalCost).toFixed(2)}`, 170, y + 12);
 
   // ===== FOOTER =====
   doc.setFontSize(9);
@@ -295,13 +314,16 @@ drawnItems.eachLayer(layer => {
     { align: "center" }
   );
 
-  doc.save(`Invoice_${date}.pdf`);
+  // ===== SAVE PDF =====
+  const filename = `Invoice_${date}.pdf`;
+  doc.save(filename);
 
   // ===== WHATSAPP =====
-  const msg = `Palm Oil Irrigation Invoice
+  const msg =
+`Palm Oil Irrigation Invoice
 Invoice: ${invoiceNo}
 Date: ${date}
-Total: RM ${totalCost.toFixed(2)}`;
+Total: RM ${Number(totalCost).toFixed(2)}`;
 
   window.open(
     `https://wa.me/60174909836?text=${encodeURIComponent(msg)}`,
