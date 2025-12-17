@@ -81,6 +81,11 @@ function showWaterLabel(circle) {
   }).addTo(map);
 }
 
+// ===== RAIN CHECK (SIMPLIFIED FLAG) =====
+function isRaining() {
+  return false; // replace with real API later
+}
+
 // ===== AREA =====
 function calcArea(layer) {
   return layer instanceof L.Polygon
@@ -196,19 +201,99 @@ document.getElementById("clearBtn").onclick = () => {
 // ===== PDF & WHATSAPP =====
 document.getElementById("generatePDF").onclick = () => {
   const { jsPDF } = window.jspdf;
-  const pdf = new jsPDF();
+  const doc = new jsPDF();
 
-  pdf.text("Palm Oil Irrigation Receipt", 10, 20);
-  pdf.text(`Admin: ${user.firstname}`, 10, 30);
-  pdf.text(`Date: ${datePicker.value}`, 10, 40);
-  pdf.text(`Total Cost: RM ${totalCost.toFixed(2)}`, 10, 60);
+  const invoiceNo = "INV-" + Date.now();
+  const date = datePicker.value;
 
-  pdf.save(`PalmOil_${datePicker.value}.pdf`);
+  // ===== HEADER =====
+  doc.setFontSize(18);
+  doc.text("PALM OIL IRRIGATION INVOICE", 105, 20, { align: "center" });
+
+  doc.setFontSize(10);
+  doc.text("Smart Palm Oil Water Management System", 105, 26, { align: "center" });
+
+  doc.line(10, 30, 200, 30);
+
+  // ===== INVOICE INFO =====
+  doc.setFontSize(11);
+  doc.text(`Invoice No: ${invoiceNo}`, 10, 40);
+  doc.text(`Date: ${date}`, 10, 46);
+  doc.text(`Admin: ${user.firstname}`, 10, 52);
+
+  // ===== TABLE HEADER =====
+  let y = 65;
+  doc.setFontSize(11);
+  doc.text("No", 10, y);
+  doc.text("Zone / Area", 25, y);
+  doc.text("Weather", 95, y);
+  doc.text("Water Usage", 130, y);
+  doc.text("Cost (RM)", 170, y);
+
+  doc.line(10, y + 2, 200, y + 2);
+
+  // ===== TABLE CONTENT =====
+  let index = 1;
+  y += 10;
+
+  drawnItems.eachLayer(layer => {
+    if (layer instanceof L.Polygon) {
+      const weather = layer.raining ? "Raining" : "Clear";
+      const water = layer.raining ? "Disabled" : "Active";
+      const cost = layer.raining ? "0.00" : layer.cost;
+
+      doc.text(String(index++), 10, y);
+      doc.text(`Polygon Area`, 25, y);
+      doc.text(weather, 95, y);
+      doc.text(water, 130, y);
+      doc.text(cost, 170, y);
+
+      y += 8;
+    }
+
+    if (layer instanceof L.Circle) {
+      const weather = layer.raining ? "Raining" : "Clear";
+      const water = layer.waterOn ? "Water ON" : "No Water";
+      const cost = layer.raining ? "0.00" : "0.00";
+
+      doc.text(String(index++), 10, y);
+      doc.text("Water Point", 25, y);
+      doc.text(weather, 95, y);
+      doc.text(water, 130, y);
+      doc.text(cost, 170, y);
+
+      y += 8;
+    }
+  });
+
+  // ===== TOTAL =====
+  doc.line(120, y + 5, 200, y + 5);
+  doc.setFontSize(12);
+  doc.text("TOTAL", 130, y + 12);
+  doc.text(`RM ${totalCost.toFixed(2)}`, 170, y + 12);
+
+  // ===== FOOTER =====
+  doc.setFontSize(9);
+  doc.text(
+    "This invoice is system generated. Rainy days incur zero irrigation cost.",
+    105,
+    285,
+    { align: "center" }
+  );
+
+  const filename = `Invoice_${date}.pdf`;
+  doc.save(filename);
+
+  // ===== WHATSAPP MESSAGE =====
+  const msg = `
+Palm Oil Irrigation Invoice
+Invoice: ${invoiceNo}
+Date: ${date}
+Total: RM ${totalCost.toFixed(2)}
+`;
 
   window.open(
-    `https://wa.me/60174909836?text=${encodeURIComponent(
-      `Palm Oil Irrigation\nDate: ${datePicker.value}\nTotal: RM ${totalCost.toFixed(2)}`
-    )}`,
+    `https://wa.me/60174909836?text=${encodeURIComponent(msg)}`,
     "_blank"
   );
 };
