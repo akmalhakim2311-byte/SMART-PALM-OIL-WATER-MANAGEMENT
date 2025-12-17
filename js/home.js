@@ -28,6 +28,19 @@ const drawControl = new L.Control.Draw({
 });
 map.addControl(drawControl);
 
+const drawControl = new L.Control.Draw({
+  draw: {
+    polygon: true,
+    circle: true,
+    circlemarker: true,   // ✅ ENABLE SENSOR MARKER
+    marker: false,
+    polyline: false,
+    rectangle: false
+  },
+  edit: { featureGroup: drawnItems }
+});
+map.addControl(drawControl);
+
 // ===== COST SETTINGS =====
 const COST_PER_AREA = 0.05;
 let totalCost = 0;
@@ -116,6 +129,31 @@ map.on(L.Draw.Event.CREATED, async e => {
   await updateLayer(layer);
 });
 
+map.on(L.Draw.Event.CREATED, async function (e) {
+  const layer = e.layer;
+
+  // Default flags
+  layer.waterOn = false;
+  layer.isSensor = layer instanceof L.CircleMarker;
+
+  drawnItems.addLayer(layer);
+
+  // Style sensor marker
+  if (layer instanceof L.CircleMarker) {
+    layer.setStyle({
+      radius: 8,
+      color: "#ff6f00",
+      fillColor: "#ff9800",
+      fillOpacity: 0.9
+    });
+
+    layer.bindPopup("📡 Sensor Point (No cost)");
+  } else {
+    await updateLayer(layer);
+    layer.on("click", () => toggleWater(layer));
+  }
+});
+
 // ===== DATE CHANGE =====
 datePicker.addEventListener("change", () => {
   loadDateData();
@@ -142,6 +180,40 @@ document.getElementById("saveBtn").onclick = () => {
       latlngs: layer instanceof L.Circle ? [layer.getLatLng().lat, layer.getLatLng().lng] : layer.getLatLngs()[0].map(p => [p.lat, p.lng]),
       radius: layer instanceof L.Circle ? layer.getRadius() : null,
       waterOn: layer.waterOn
+    });
+  });
+
+  localStorage.setItem("palmOilData_" + dateKey, JSON.stringify(data));
+  alert("Data saved for " + dateKey);
+};
+
+document.getElementById("saveBtn").onclick = () => {
+  const dateKey = datePicker.value;
+  const data = [];
+
+  drawnItems.eachLayer(layer => {
+    data.push({
+      type:
+        layer instanceof L.Circle ? "circle" :
+        layer instanceof L.Polygon ? "polygon" :
+        layer instanceof L.CircleMarker ? "circlemarker" : "unknown",
+
+      latlng:
+        layer instanceof L.CircleMarker
+          ? [layer.getLatLng().lat, layer.getLatLng().lng]
+          : null,
+
+      latlngs:
+        layer instanceof L.Circle
+          ? [layer.getLatLng().lat, layer.getLatLng().lng]
+          : layer instanceof L.Polygon
+          ? layer.getLatLngs()[0].map(p => [p.lat, p.lng])
+          : null,
+
+      radius:
+        layer instanceof L.Circle ? layer.getRadius() : null,
+
+      waterOn: layer.waterOn || false
     });
   });
 
@@ -177,12 +249,63 @@ function loadDateData() {
   });
 }
 
+function loadDateData() {
+  drawnItems.clearLayers();
+  removeAllWaterLabels();
+
+  const dateKey = datePicker.value;
+  const savedData = JSON.parse(
+    localStorage.getItem("palmOilData_" + dateKey) || "[]"
+  );
+
+  savedData.forEach(async d => {
+    let layer;
+
+    if (d.type === "circle") {
+      layer = L.circle([d.latlngs[0], d.latlngs[1]], { radius: d.radius });
+    }
+
+    if (d.type === "polygon") {
+      layer = L.polygon(d.latlngs.map(p => ({ lat: p[0], lng: p[1] })));
+    }
+
+    if (d.type === "circlemarker") {
+      layer = L.circleMarker(d.latlng, {
+        radius: 8,
+        color: "#ff6f00",
+        fillColor: "#ff9800",
+        fillOpacity: 0.9
+      });
+      layer.bindPopup("📡 Sensor Point (No cost)");
+    }
+
+    if (!layer) return;
+
+    layer.waterOn = d.waterOn || false;
+    drawnItems.addLayer(layer);
+
+    if (!(layer instanceof L.CircleMarker)) {
+      layer.on("click", () => toggleWater(layer));
+      await updateLayer(layer);
+    }
+  });
+
+  updateTotal();
+}
+
 // ===== CLEAR ALL =====
 document.getElementById("clearBtn").onclick = () => {
   drawnItems.eachLayer(layer => { if (layer._waterLabel) map.removeLayer(layer._waterLabel); });
   drawnItems.clearLayers();
   updateTotal(false);
 };
+
+document.getElementById("clearBtn").onclick = () => {
+  drawnItems.clearLayers();
+  removeAllWaterLabels();
+  updateTotal();
+};
+
 
 // ===== GENERATE PDF & WHATSAPP =====
 document.getElementById("generatePDF").onclick = async () => {
