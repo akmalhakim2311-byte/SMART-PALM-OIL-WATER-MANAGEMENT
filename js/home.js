@@ -214,67 +214,61 @@ document.getElementById("generatePDF").onclick = () => {
   // ===== HEADER =====
   doc.setFontSize(18);
   doc.text("PALM OIL IRRIGATION INVOICE", 105, 20, { align: "center" });
+
   doc.setFontSize(10);
   doc.text("Smart Palm Oil Water Management System", 105, 26, { align: "center" });
+
   doc.line(10, 30, 200, 30);
 
-  // ===== INFO =====
+  // ===== INVOICE INFO =====
   doc.setFontSize(11);
   doc.text(`Invoice No: ${invoiceNo}`, 10, 40);
   doc.text(`Date: ${date}`, 10, 46);
   doc.text(`Admin: ${user.firstname}`, 10, 52);
 
   // ===== TABLE HEADER =====
-  let y = 70;
+  let y = 65;
+  doc.setFontSize(11);
   doc.text("No", 10, y);
   doc.text("Zone / Area", 25, y);
   doc.text("Weather", 95, y);
   doc.text("Water Usage", 130, y);
   doc.text("Cost (RM)", 170, y);
+
   doc.line(10, y + 2, 200, y + 2);
+
+  // ===== TABLE CONTENT =====
+  let index = 1;
   y += 10;
 
-  // ===== COLLECT LAYERS =====
-  const polygons = [];
-  const circles = [];
-
   drawnItems.eachLayer(layer => {
-    if (layer instanceof L.Polygon) polygons.push(layer);
-    if (layer instanceof L.Circle) circles.push(layer);
-  });
+    if (layer instanceof L.Polygon) {
+      const weather = layer.raining ? "Raining" : "Clear";
+      const water = layer.raining ? "Disabled" : "Active";
+      const cost = layer.raining ? "0.00" : layer.cost;
 
-  // ===== ZONE-BASED NUMBERING =====
-  let zoneNo = 1;
+      doc.text(String(index++), 10, y);
+      doc.text(`Polygon Area`, 25, y);
+      doc.text(weather, 95, y);
+      doc.text(water, 130, y);
+      doc.text(cost, 170, y);
 
-  polygons.forEach(polygon => {
-    const weather = polygon.raining ? "Raining" : "Clear";
-    const water = polygon.raining ? "Disabled" : "Active";
-    const cost = polygon.raining ? "0.00" : polygon.cost;
+      y += 8;
+    }
 
-    // Polygon row
-    doc.text(String(zoneNo), 10, y);
-    doc.text("Polygon Area", 25, y);
-    doc.text(weather, 95, y);
-    doc.text(water, 130, y);
-    doc.text(cost, 170, y);
-    y += 8;
+    if (layer instanceof L.Circle) {
+      const weather = layer.raining ? "Raining" : "Clear";
+      const water = layer.waterOn ? "Water ON" : "No Water";
+      const cost = layer.raining ? "0.00" : "0.00";
 
-    // Water points inside polygon
-    circles.forEach(circle => {
-      if (isCircleInsidePolygon(circle, polygon)) {
-        const cWeather = circle.raining ? "Raining" : "Clear";
-        const cWater = circle.waterOn ? "Water ON" : "No Water";
+      doc.text(String(index++), 10, y);
+      doc.text("Water Point", 25, y);
+      doc.text(weather, 95, y);
+      doc.text(water, 130, y);
+      doc.text(cost, 170, y);
 
-        doc.text("", 10, y); // same zone number
-        doc.text("↳ Water Point", 25, y);
-        doc.text(cWeather, 95, y);
-        doc.text(cWater, 130, y);
-        doc.text("0.00", 170, y);
-        y += 8;
-      }
-    });
-
-    zoneNo++;
+      y += 8;
+    }
   });
 
   // ===== TOTAL =====
