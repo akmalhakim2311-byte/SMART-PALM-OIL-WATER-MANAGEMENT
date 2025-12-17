@@ -196,8 +196,9 @@ function loadDateData() {
 }
 
 // ===== CLEAR ALL =====
+// ===== CLEAR =====
 document.getElementById("clearBtn").onclick = () => {
-  drawnItems.eachLayer(layer => { if (layer._waterLabel) map.removeLayer(layer._waterLabel); });
+  removeAllWaterLabels();
   drawnItems.clearLayers();
   updateTotal(false);
 };
