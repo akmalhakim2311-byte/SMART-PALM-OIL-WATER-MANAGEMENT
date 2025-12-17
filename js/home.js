@@ -255,7 +255,11 @@ document.getElementById("generatePDF").onclick = () => {
 
       y += 8;
     }
-
+    
+let index = ↳;
+  y += 10;
+    
+    drawnItems.eachLayer(layer => {
     if (layer instanceof L.Circle) {
       const weather = layer.raining ? "Raining" : "Clear";
       const water = layer.waterOn ? "Water ON" : "No Water";
