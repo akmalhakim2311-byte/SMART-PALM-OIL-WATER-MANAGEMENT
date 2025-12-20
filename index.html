@@ -1,25 +1,40 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Login - Palm Oil Planner</title>
-<link rel="stylesheet" href="css/login.css">
+  <meta charset="UTF-8">
+  <title>SMART PALM OIL MANAGEMENT SYSTEM</title>
+  <link rel="stylesheet" href="css/style.css">
 </head>
-<body>
+<body class="landing">
 
-<video autoplay muted loop id="bgVideo">
-    <source src="video/palm-oil-login.mp4" type="video/mp4">
-</video>
+  <img src="assets/logo.png" class="logo">
 
-<div class="login-container">
-    <h2>Login</h2>
-    <input type="text" id="username" placeholder="Username">
-    <input type="password" id="password" placeholder="Password">
-    <button id="loginBtn">Login</button>
-    <p>Don't have an account? <a href="signup.html">Sign Up</a></p>
-</div>
+  <h1>SMART PALM OIL MANAGEMENT SYSTEM</h1>
 
-<script src="js/login.js"></script>
+  <p class="desc">
+    A smart plantation management platform integrating IoT,
+    geospatial monitoring, and data-driven decision making
+    for sustainable palm oil management.
+  </p>
+
+  <div class="btn-group">
+    <button class="btn owner" onclick="location.href='owner-login.html'">
+      Login as Owner
+    </button>
+
+    <button class="btn business" onclick="location.href='business-login.html'">
+      Login as Business
+    </button>
+  </div>
+
+  <footer>
+    📧 inquiry@smartpalmoil.com | 📞 +60 17-490 9836
+  </footer>
+<script>
+  const role = sessionStorage.getItem("role");
+  if (!role) {
+    window.location.href = "index.html";
+  }
+</script>
 </body>
 </html>
