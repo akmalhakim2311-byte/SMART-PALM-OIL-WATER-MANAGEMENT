@@ -18,6 +18,14 @@ const map = L.map("map").setView([3.7026, 102.5455], 14);
 L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
   attribution: "© OpenStreetMap"
 }).addTo(map);
+const role = sessionStorage.getItem("role");
+
+if (role === "owner") {
+  console.log("Owner: full access");
+} else {
+  console.log("Business: limited access");
+  // hide admin controls if any
+}
 
 // ===== DRAW CONTROLS =====
 const drawnItems = new L.FeatureGroup();
