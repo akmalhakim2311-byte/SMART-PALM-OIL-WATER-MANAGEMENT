@@ -20,13 +20,6 @@ L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
 }).addTo(map);
 const role = sessionStorage.getItem("role");
 
-if (role === "owner") {
-  console.log("Owner: full access");
-} else {
-  console.log("Business: limited access");
-  // hide admin controls if any
-}
-
 // ===== DRAW CONTROLS =====
 const drawnItems = new L.FeatureGroup();
 map.addLayer(drawnItems);
