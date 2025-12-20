@@ -1,45 +1,32 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
-<title>Palm Oil Irrigation Dashboard</title>
-
-<!-- Leaflet CSS -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
-<link rel="stylesheet" href="https://unpkg.com/leaflet-draw/dist/leaflet.draw.css">
-
-<!-- Custom CSS -->
-<link rel="stylesheet" href="css/home.css">
+  <title>Home</title>
 </head>
 <body>
 
-<header>
-  <h2>Welcome, <span id="adminName"></span></h2>
-  <button id="logoutBtn">Logout</button>
-</header>
+<script>
+  const role = sessionStorage.getItem("role");
+  if (!role) {
+    window.location.href = "index.html";
+  }
+</script>
 
-<div class="controls">
-  <label>Select Date:</label>
-  <input type="date" id="datePicker">
-  <button id="saveBtn">Save</button>
-  <button id="clearBtn">Clear All</button>
-  <button id="generatePDF">Generate PDF & WhatsApp</button>
-</div>
+<h1>DASHBOARD</h1>
 
-<div id="totalWrapper">
-  <h3>Total Cost: RM <span id="totalCost">0.00</span></h3>
-</div>
+<p id="roleText"></p>
 
-<div id="map"></div>
+<button onclick="logout()">Logout</button>
 
-<!-- Leaflet JS -->
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-<script src="https://unpkg.com/leaflet-draw/dist/leaflet.draw.js"></script>
+<script>
+  document.getElementById("roleText").innerText =
+    "Logged in as: " + sessionStorage.getItem("role");
 
-<!-- jsPDF -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  
-<!-- Custom JS -->
-<script src="js/home.js"></script>
+  function logout() {
+    sessionStorage.clear();
+    window.location.href = "index.html";
+  }
+</script>
+
 </body>
 </html>
