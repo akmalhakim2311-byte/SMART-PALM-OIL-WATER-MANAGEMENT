@@ -1,25 +1,48 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>SMART PALM OIL MANAGEMENT SYSTEM</title>
-  <link rel="stylesheet" href="css/style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login</title>
+<link rel="stylesheet" href="login-style.css">
 </head>
 <body>
 
-  <h1>SMART PALM OIL MANAGEMENT SYSTEM</h1>
+<!-- Background Video -->
+<video autoplay muted loop id="bg-video">
+  <source src="video/palm-oil.mp4" type="video/mp4">
+</video>
 
-  <p>
-    A smart palm oil plantation management system using
-    IoT, real-time monitoring, and geospatial data.
-  </p>
+<!-- Login Form Container -->
+<div class="login-container">
+  <h2>Login</h2>
+  <input type="text" id="username" placeholder="Username">
+  <input type="password" id="password" placeholder="Password">
+  <button id="loginBtn">Login</button>
+  <p>Don't have an account? <a href="signup.html">Sign Up</a></p>
+  <p id="message" style="color:red;"></p>
+</div>
 
-  <button onclick="location.href='owner-login.html'">
-    Login as Owner
-  </button>
+<script>
+document.getElementById("loginBtn").onclick = () => {
+  const username = document.getElementById("username").value.trim();
+  const password = document.getElementById("password").value.trim();
+  const accounts = JSON.parse(localStorage.getItem("accounts")) || [];
 
-  <button onclick="location.href='business-login.html'">
-    Login as Business
-  </button>
+  if(!username || !password) {
+    document.getElementById("message").textContent = "Please enter username and password.";
+    return;
+  }
+
+  const user = accounts.find(a => a.username===username && a.password===password);
+  if(user) {
+    localStorage.setItem("currentUser", JSON.stringify({ firstname: user.firstname, username: user.username }));
+    window.location.href = "home.html";
+  } else {
+    document.getElementById("message").textContent = "Invalid login or account not found.";
+  }
+};
+</script>
 
 </body>
 </html>
