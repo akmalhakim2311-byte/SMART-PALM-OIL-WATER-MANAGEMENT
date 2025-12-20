@@ -1,40 +1,25 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
   <title>SMART PALM OIL MANAGEMENT SYSTEM</title>
   <link rel="stylesheet" href="css/style.css">
 </head>
-<body class="landing">
-
-  <img src="assets/logo.png" class="logo">
+<body>
 
   <h1>SMART PALM OIL MANAGEMENT SYSTEM</h1>
 
-  <p class="desc">
-    A smart plantation management platform integrating IoT,
-    geospatial monitoring, and data-driven decision making
-    for sustainable palm oil management.
+  <p>
+    A smart palm oil plantation management system using
+    IoT, real-time monitoring, and geospatial data.
   </p>
 
-  <div class="btn-group">
-    <button class="btn owner" onclick="location.href='owner-login.html'">
-      Login as Owner
-    </button>
+  <button onclick="location.href='owner-login.html'">
+    Login as Owner
+  </button>
 
-    <button class="btn business" onclick="location.href='business-login.html'">
-      Login as Business
-    </button>
-  </div>
+  <button onclick="location.href='business-login.html'">
+    Login as Business
+  </button>
 
-  <footer>
-    📧 inquiry@smartpalmoil.com | 📞 +60 17-490 9836
-  </footer>
-<script>
-  const role = sessionStorage.getItem("role");
-  if (!role) {
-    window.location.href = "index.html";
-  }
-</script>
 </body>
 </html>
