@@ -1,32 +1,48 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Home</title>
+<meta charset="UTF-8">
+<title>Palm Oil Irrigation Dashboard</title>
+
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet-draw/dist/leaflet.draw.css">
+
+<!-- Custom CSS -->
+<link rel="stylesheet" href="css/home.css">
 </head>
 <body>
 
-<script>
-  const role = sessionStorage.getItem("role");
-  if (!role) {
-    window.location.href = "index.html";
-  }
-</script>
+<header>
+  <h2>Welcome, <span id="adminName"></span></h2>
+  <button id="logoutBtn">Logout</button>
+</header>
 
-<h1>DASHBOARD</h1>
+<div class="controls">
+  <div class="control-row">
+    <label>Select Date:</label>
+    <input type="date" id="datePicker">
+    <button id="saveBtn">Save</button>
+    <button id="clearBtn">Clear All</button>
+    <button id="generatePDF">Export PDF & WhatsApp</button>
+  </div>
 
-<p id="roleText"></p>
+  <!-- TOTAL COST BELOW CONTROLS -->
+  <div class="summary">
+    Total Cost: RM <span id="totalCost">0.00</span>
+  </div>
+</div>
 
-<button onclick="logout()">Logout</button>
+<div id="map"></div>
 
-<script>
-  document.getElementById("roleText").innerText =
-    "Logged in as: " + sessionStorage.getItem("role");
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet-draw/dist/leaflet.draw.js"></script>
 
-  function logout() {
-    sessionStorage.clear();
-    window.location.href = "index.html";
-  }
-</script>
+<!-- jsPDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
+<!-- Custom JS -->
+<script src="js/home.js"></script>
 </body>
 </html>
